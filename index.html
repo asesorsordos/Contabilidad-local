@@ -56,13 +56,75 @@
         .form-control:focus, .form-select:focus {
             background-color: #eef5ff;
         }
+
+        /* --- Dark Mode Styles --- */
+        body.dark-mode {
+            background-color: #212529;
+            color: #dee2e6;
+        }
+        body.dark-mode .card {
+            background-color: #343a40;
+            border-color: #495057;
+        }
+        body.dark-mode .card-header, body.dark-mode .modal-header, body.dark-mode .modal-footer, body.dark-mode .border-top {
+            border-color: #495057 !important;
+        }
+        body.dark-mode .table {
+            color: #dee2e6;
+        }
+        body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        body.dark-mode .table-hover > tbody > tr:hover > * {
+            background-color: rgba(255, 255, 255, 0.075);
+        }
+        body.dark-mode .form-control, body.dark-mode .form-select {
+            background-color: #495057;
+            color: #fff;
+            border-color: #6c757d;
+        }
+        body.dark-mode .form-control::placeholder {
+            color: #adb5bd;
+        }
+        body.dark-mode .form-control:focus, body.dark-mode .form-select:focus {
+            background-color: #495057;
+        }
+        body.dark-mode .input-group-text {
+            background-color: #495057;
+            border-color: #6c757d;
+            color: #dee2e6;
+        }
+        body.dark-mode .text-muted {
+            color: #adb5bd !important;
+        }
+        body.dark-mode .modal-content {
+            background-color: #343a40;
+        }
+        body.dark-mode .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        body.dark-mode .bg-light {
+            background-color: #495057 !important;
+            color: #fff !important;
+        }
+        body.dark-mode .btn-outline-secondary {
+            color: #dee2e6;
+            border-color: #6c757d;
+        }
+        body.dark-mode .btn-outline-secondary:hover {
+            background-color: #495057;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
 
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">Sistema de Contabilidad</h1>
-
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">Sistema de Contabilidad</h1>
+            <button id="theme-toggle" class="btn btn-outline-secondary btn-sm">Cambiar Tema</button>
+        </div>
+ 
         <!-- Reportes y Totales -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -93,6 +155,23 @@
                         <p class="card-text fs-4 fw-bold" id="total-balance">$0</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard de Fondos (Colapsable) -->
+        <div class="mb-4">
+            <p>
+                <a class="btn btn-outline-primary w-100" data-bs-toggle="collapse" href="#fundsDashboardCollapse" role="button" aria-expanded="false" aria-controls="fundsDashboardCollapse">
+                    Ver/Ocultar Dashboard de Fondos
+                </a>
+            </p>
+            <div class="collapse" id="fundsDashboardCollapse">
+                <div class="card card-body">
+                    <h4 class="mb-3 text-center">Saldos por Fondo</h4>
+                    <div class="row" id="funds-dashboard">
+                        <!-- Las tarjetas de fondos se insertarán aquí con JavaScript -->
                     </div>
                 </div>
             </div>
@@ -337,6 +416,8 @@
             const totalsTitle = document.getElementById('totals-title');
             const cashReconciliationModal = new bootstrap.Modal(document.getElementById('cashReconciliationModal'));
             const fundSelect = document.getElementById('fund');
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
 
             // Poblar el dropdown de filtro de fondos
             Array.from(fundSelect.options).forEach(option => {
@@ -598,9 +679,57 @@
 
                 renderEntries(filteredEntries);
                 calculateAndRenderTotals(filteredEntries);
+                renderFundsDashboard();
             };
 
             fundFilter.addEventListener('change', updateDisplay);
+
+            const renderFundsDashboard = () => {
+                const fundsDashboardContainer = document.getElementById('funds-dashboard');
+                if (!fundsDashboardContainer) return;
+
+                const entries = getEntries();
+                const fundOptions = Array.from(document.getElementById('fund').options).map(opt => opt.value);
+                
+                // Calculate balances for each fund
+                const fundBalances = fundOptions.reduce((acc, fundName) => {
+                    acc[fundName] = 0;
+                    return acc;
+                }, {});
+
+                entries.forEach(entry => {
+                    if (fundBalances.hasOwnProperty(entry.fund)) {
+                        const amount = parseFloat(entry.amount) || 0;
+                        if (entry.type === 'Ingreso') {
+                            fundBalances[entry.fund] += amount;
+                        } else {
+                            fundBalances[entry.fund] -= amount;
+                        }
+                    }
+                });
+
+                fundsDashboardContainer.innerHTML = ''; // Clear previous content
+
+                // Sort funds alphabetically for consistent order
+                fundOptions.sort();
+
+                fundOptions.forEach(fundName => {
+                    const balance = fundBalances[fundName];
+                    const cardColor = balance >= 0 ? 'bg-light' : 'bg-warning text-dark';
+
+                    const cardHtml = `
+                        <div class="col-md-4 col-lg-3 mb-3">
+                            <div class="card ${cardColor}">
+                                <div class="card-body text-center p-2">
+                                    <h6 class="card-title text-truncate mb-1" style="font-size: 0.9rem;" title="${fundName}">${fundName}</h6>
+                                    <p class="card-text fs-5 fw-bold mb-0">$${formatNumber(balance)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    fundsDashboardContainer.insertAdjacentHTML('beforeend', cardHtml);
+                });
+            };
 
             // --- Lógica de Arqueo de Caja ---
             const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50];
@@ -672,6 +801,26 @@
             };
 
             // Carga inicial de datos
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    body.classList.add('dark-mode');
+                    themeToggle.textContent = 'Cambiar a Modo Día';
+                } else {
+                    body.classList.remove('dark-mode');
+                    themeToggle.textContent = 'Cambiar a Modo Noche';
+                }
+            };
+
+            themeToggle.addEventListener('click', (e) => {
+                const currentTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
+                localStorage.setItem('theme', currentTheme);
+                applyTheme(currentTheme);
+            });
+
+            // Cargar tema guardado o usar 'light' por defecto
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
             buildDenominationTable();
             updateDisplay();
         });
