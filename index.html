@@ -45,6 +45,17 @@
             }
             .modal-header .btn-close { display: none; }
         }
+        /* --- Mejoras Visuales --- */
+        /* Resaltar tarjetas de resumen al pasar el mouse */
+        .card.bg-success:hover, .card.bg-danger:hover, .card.bg-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            transition: all 0.2s ease-out;
+        }
+        /* Resaltar campos de formulario al enfocarlos */
+        .form-control:focus, .form-select:focus {
+            background-color: #eef5ff;
+        }
     </style>
 </head>
 <body>
@@ -185,6 +196,12 @@
                 </div>
             </div>
         </div>
+
+        <footer class="text-center text-muted py-4 border-top">
+            <a href="#" data-bs-toggle="modal" data-bs-target="#documentationModal">
+                Ver Uso y Características
+            </a>
+        </footer>
     </div>
 
     <!-- Modal para el Recibo -->
@@ -253,6 +270,53 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
                     <button type="button" class="btn btn-primary" onclick="printContent('reconciliation-print-area')">Imprimir Arqueo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Documentación -->
+    <div class="modal fade" id="documentationModal" tabindex="-1" aria-labelledby="documentationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="documentationModalLabel">Ayuda y Documentación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Características Principales</h4>
+                    <ul class="list-group mb-4">
+                        <li class="list-group-item"><strong>Gestión de Asientos:</strong> Crear, editar y visualizar asientos contables.</li>
+                        <li class="list-group-item"><strong>Resumen Financiero:</strong> Visualiza totales de ingresos, egresos y el saldo en tiempo real.</li>
+                        <li class="list-group-item"><strong>Filtrado por Fondos:</strong> Filtra los asientos y los totales por fondos específicos.</li>
+                        <li class="list-group-item"><strong>Generación de Recibos:</strong> Genera e imprime recibos detallados.</li>
+                        <li class="list-group-item"><strong>Arqueo de Caja:</strong> Herramienta para facilitar el conteo de efectivo.</li>
+                        <li class="list-group-item"><strong>Exportación a CSV:</strong> Exporta la vista actual a un archivo `.csv`.</li>
+                        <li class="list-group-item"><strong>Persistencia de Datos:</strong> Los datos se guardan localmente en tu navegador.</li>
+                    </ul>
+
+                    <h4>¿Cómo usarlo?</h4>
+                    <p>La aplicación está diseñada para ser intuitiva. Sigue estos pasos para comenzar:</p>
+                    <ol class="list-group list-group-numbered mb-4">
+                        <li class="list-group-item">Usa el formulario "Nuevo Asiento Contable" para registrar ingresos o egresos.</li>
+                        <li class="list-group-item">Los registros aparecerán en el "Historial de Asientos".</li>
+                        <li class="list-group-item">Usa los botones en el historial para "Editar" o "Ver Recibo" de una transacción.</li>
+                        <li class="list-group-item">Filtra por fondo o usa las herramientas como "Arqueo de Caja" y "Exportar a CSV" según necesites.</li>
+                    </ol>
+
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">¡Importante! Sobre el Almacenamiento de Datos</h4>
+                        <p>Esta aplicación utiliza el almacenamiento local (`localStorage`) de tu navegador. Esto significa:</p>
+                        <hr>
+                        <ul>
+                            <li>Los datos son locales: La información se almacena <strong>únicamente en la computadora y el navegador</strong> que estás utilizando. No se sincroniza entre dispositivos.</li>
+                            <li><strong>Riesgo de pérdida de datos:</strong> Si limpias los datos de tu navegador (caché, historial, etc.), <strong>perderás toda la información contable registrada</strong>.</li>
+                            <li>Se recomienda encarecidamente utilizar la función <strong>"Exportar a CSV"</strong> de forma regular para crear copias de seguridad.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
                 </div>
             </div>
         </div>
