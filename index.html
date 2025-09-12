@@ -96,14 +96,8 @@
             border-color: #555;
             color: #e9ecef;
         }
-        body.dark-mode .text-success {
-            color: #75b798 !important;
-        }
-        body.dark-mode .text-danger {
-            color: #ea868f !important;
-        }
         body.dark-mode .text-muted {
-            color: #adb5bd !important;
+            color: #999 !important;
         }
         body.dark-mode .modal-content {
             background-color: #2b2b2b;
@@ -122,16 +116,6 @@
         body.dark-mode .btn-outline-secondary:hover {
             background-color: #3a3a3a;
             color: #fff;
-        }
-
-        /* Ocultar flechas de aumento/disminución en campos de número */
-        input[type=number] {
-            -moz-appearance: textfield; /* Firefox */
-        }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none;
-            margin: 0;
         }
     </style>
 </head>
@@ -208,21 +192,15 @@
                             <label for="date" class="form-label">Fecha</label>
                             <input type="date" class="form-control" id="date" required>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="receipt-number" class="form-label">Nro. Recibo</label>
-                            <input type="text" class="form-control" id="receipt-number" placeholder="Opcional">
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-9 mb-3">
                             <label for="concept" class="form-label">Concepto</label>
-                            <input type="text" class="form-control" id="concept" list="concept-suggestions" placeholder="Ej: Ofrenda, Donación, Compra de sillas" required>
-                            <datalist id="concept-suggestions"></datalist>
+                            <input type="text" class="form-control" id="concept" placeholder="Ej: Ofrenda, Donación, Compra de sillas" required>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="person" class="form-label">Recibido de / Pagado a</label>
-                            <input type="text" class="form-control" id="person" list="person-suggestions" placeholder="Nombre de la persona o entidad" required>
-                            <datalist id="person-suggestions"></datalist>
+                            <input type="text" class="form-control" id="person" placeholder="Nombre de la persona o entidad" required>
                         </div>
                     </div>
                     <div class="row">
@@ -237,7 +215,7 @@
                             <label for="amount" class="form-label">Monto</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="amount" min="0" placeholder="0" required>
+                                <input type="number" class="form-control" id="amount" step="1" min="0" placeholder="0" required>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -290,7 +268,6 @@
                         <thead>
                             <tr>
                                 <th>Fecha</th>
-                                <th>Nro. Recibo</th>
                                 <th>Concepto</th>
                                 <th>Recibido de / Pagado a</th>
                                 <th>Tipo</th>
@@ -491,7 +468,15 @@
             const getFunds = () => {
                 const fundsJSON = localStorage.getItem('accountingFunds');
                 if (fundsJSON) {
-                    return JSON.parse(fundsJSON);
+                    const funds = JSON.parse(fundsJSON);
+                    // Se asegura de que la lista de fondos siempre esté ordenada con "Fondo Local" al principio.
+                    // Esto corrige el problema para usuarios con datos guardados antes del cambio.
+                    funds.sort((a, b) => {
+                        if (a === 'Fondo Local') return -1;
+                        if (b === 'Fondo Local') return 1;
+                        return a.localeCompare(b);
+                    });
+                    return funds;
                 } else {
                     // First time setup: combine default funds with any funds from existing entries for a smooth migration.
                     const existingEntries = getEntries();
@@ -579,40 +564,6 @@
                 alert(`Fondo "${newName}" añadido.`);
             });
             
-            const populateConceptSuggestions = () => {
-                const datalist = document.getElementById('concept-suggestions');
-                if (!datalist) return;
-
-                const entries = getEntries();
-                // Obtener conceptos únicos y no vacíos, y ordenarlos
-                const concepts = [...new Set(entries.map(e => e.concept.trim()).filter(c => c))].sort((a, b) => a.localeCompare(b));
-
-                datalist.innerHTML = ''; // Limpiar opciones existentes
-
-                concepts.forEach(concept => {
-                    const option = document.createElement('option');
-                    option.value = concept;
-                    datalist.appendChild(option);
-                });
-            };
-
-            const populatePersonSuggestions = () => {
-                const datalist = document.getElementById('person-suggestions');
-                if (!datalist) return;
-
-                const entries = getEntries();
-                // Obtener personas únicas y no vacías, y ordenarlas
-                const persons = [...new Set(entries.map(e => e.person.trim()).filter(p => p))].sort((a, b) => a.localeCompare(b));
-
-                datalist.innerHTML = ''; // Limpiar opciones existentes
-
-                persons.forEach(person => {
-                    const option = document.createElement('option');
-                    option.value = person;
-                    datalist.appendChild(option);
-                });
-            };
-
             const formatNumber = (value) => {
                 return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
             };
@@ -663,7 +614,6 @@
 
                     row.innerHTML = `
                         <td>${entry.date}</td>
-                        <td>${entry.receiptNumber || ''}</td>
                         <td>${entry.concept}</td>
                         <td>${entry.person || ''}</td>
                         <td><span class="fw-bold ${typeClass}">${entry.type}</span></td>
@@ -688,7 +638,6 @@
 
                 const entryData = {
                     date: document.getElementById('date').value,
-                    receiptNumber: document.getElementById('receipt-number').value,
                     concept: document.getElementById('concept').value,
                     person: document.getElementById('person').value,
                     type: document.getElementById('type').value,
@@ -715,8 +664,6 @@
                 }
 
                 saveEntries(entries);
-                populateConceptSuggestions(); // Actualiza las sugerencias de conceptos
-                populatePersonSuggestions(); // Actualiza las sugerencias de personas
                 cancelEdit(); // Restablece el formulario y los botones
                 updateDisplay(); // Actualiza toda la vista
             });
@@ -741,7 +688,6 @@
                 // Rellenar el formulario
                 document.getElementById('edit-id').value = entryToEdit.id;
                 document.getElementById('date').value = entryToEdit.date;
-                document.getElementById('receipt-number').value = entryToEdit.receiptNumber || '';
                 document.getElementById('concept').value = entryToEdit.concept;
                 document.getElementById('person').value = entryToEdit.person;
                 document.getElementById('type').value = entryToEdit.type;
@@ -836,10 +782,7 @@
                         <div class="receipt">
                             <div class="receipt-header">
                                 <h2>RECIBO</h2>
-                                <div class="d-flex justify-content-center text-muted small">
-                                    <span class="me-4">ID de Transacción: ${entry.id}</span>
-                                    ${entry.receiptNumber ? `<span>Nro. Recibo: <strong>${entry.receiptNumber}</strong></span>` : ''}
-                                </div>
+                                <span>ID de Transacción: ${entry.id}</span>
                             </div>
                             <div class="receipt-body">
                                 <p><strong>Fecha:</strong> ${entry.date}</p>
@@ -885,7 +828,7 @@
                     return;
                 }
 
-                const headers = ['Fecha', 'Nro. Recibo', 'Concepto', 'Recibido de / Pagado a', 'Tipo', 'Monto', 'Fondo Asignado'];
+                const headers = ['Fecha', 'Concepto', 'Recibido de / Pagado a', 'Tipo', 'Monto', 'Fondo Asignado'];
                 
                 const escapeCSV = (value) => {
                     if (value === null || value === undefined) return '';
@@ -900,7 +843,6 @@
                     headers.join(','),
                     ...filteredEntries.map(e => [
                         e.date,
-                        escapeCSV(e.receiptNumber),
                         escapeCSV(e.concept),
                         escapeCSV(e.person),
                         e.type,
@@ -1089,8 +1031,6 @@
 
             populateFundSelects();
             buildDenominationTable();
-            populateConceptSuggestions(); // Carga inicial de sugerencias
-            populatePersonSuggestions(); // Carga inicial de sugerencias de personas
             updateDisplay();
         });
     </script>
