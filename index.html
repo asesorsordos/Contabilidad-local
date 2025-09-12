@@ -117,6 +117,16 @@
             background-color: #3a3a3a;
             color: #fff;
         }
+
+        /* Ocultar flechas de aumento/disminución en campos de número */
+        input[type=number] {
+            -moz-appearance: textfield; /* Firefox */
+        }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -192,7 +202,11 @@
                             <label for="date" class="form-label">Fecha</label>
                             <input type="date" class="form-control" id="date" required>
                         </div>
-                        <div class="col-md-9 mb-3">
+                        <div class="col-md-3 mb-3">
+                            <label for="receipt-number" class="form-label">Nro. Recibo</label>
+                            <input type="text" class="form-control" id="receipt-number" placeholder="Opcional">
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label for="concept" class="form-label">Concepto</label>
                             <input type="text" class="form-control" id="concept" placeholder="Ej: Ofrenda, Donación, Compra de sillas" required>
                         </div>
@@ -215,7 +229,7 @@
                             <label for="amount" class="form-label">Monto</label>
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="amount" step="1" min="0" placeholder="0" required>
+                                <input type="number" class="form-control" id="amount" min="0" placeholder="0" required>
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -268,6 +282,7 @@
                         <thead>
                             <tr>
                                 <th>Fecha</th>
+                                <th>Nro. Recibo</th>
                                 <th>Concepto</th>
                                 <th>Recibido de / Pagado a</th>
                                 <th>Tipo</th>
@@ -614,6 +629,7 @@
 
                     row.innerHTML = `
                         <td>${entry.date}</td>
+                        <td>${entry.receiptNumber || ''}</td>
                         <td>${entry.concept}</td>
                         <td>${entry.person || ''}</td>
                         <td><span class="fw-bold ${typeClass}">${entry.type}</span></td>
@@ -638,6 +654,7 @@
 
                 const entryData = {
                     date: document.getElementById('date').value,
+                    receiptNumber: document.getElementById('receipt-number').value,
                     concept: document.getElementById('concept').value,
                     person: document.getElementById('person').value,
                     type: document.getElementById('type').value,
@@ -688,6 +705,7 @@
                 // Rellenar el formulario
                 document.getElementById('edit-id').value = entryToEdit.id;
                 document.getElementById('date').value = entryToEdit.date;
+                document.getElementById('receipt-number').value = entryToEdit.receiptNumber || '';
                 document.getElementById('concept').value = entryToEdit.concept;
                 document.getElementById('person').value = entryToEdit.person;
                 document.getElementById('type').value = entryToEdit.type;
@@ -782,7 +800,10 @@
                         <div class="receipt">
                             <div class="receipt-header">
                                 <h2>RECIBO</h2>
-                                <span>ID de Transacción: ${entry.id}</span>
+                                <div class="d-flex justify-content-center text-muted small">
+                                    <span class="me-4">ID de Transacción: ${entry.id}</span>
+                                    ${entry.receiptNumber ? `<span>Nro. Recibo: <strong>${entry.receiptNumber}</strong></span>` : ''}
+                                </div>
                             </div>
                             <div class="receipt-body">
                                 <p><strong>Fecha:</strong> ${entry.date}</p>
@@ -828,7 +849,7 @@
                     return;
                 }
 
-                const headers = ['Fecha', 'Concepto', 'Recibido de / Pagado a', 'Tipo', 'Monto', 'Fondo Asignado'];
+                const headers = ['Fecha', 'Nro. Recibo', 'Concepto', 'Recibido de / Pagado a', 'Tipo', 'Monto', 'Fondo Asignado'];
                 
                 const escapeCSV = (value) => {
                     if (value === null || value === undefined) return '';
@@ -843,6 +864,7 @@
                     headers.join(','),
                     ...filteredEntries.map(e => [
                         e.date,
+                        escapeCSV(e.receiptNumber),
                         escapeCSV(e.concept),
                         escapeCSV(e.person),
                         e.type,
