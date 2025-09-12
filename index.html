@@ -180,7 +180,7 @@
         <!-- Formulario de Ingreso -->
         <div class="card mb-5">
             <div class="card-header">
-                <h3 id="form-title">Nuevo Asiento Contable</h3>
+                <h3 id="form-title">Ingresar Asiento Contable</h3>
             </div>
             <div class="card-body">
                 <form id="accounting-form">
@@ -198,7 +198,7 @@
                     <div class="row">
                         <div class="col-md-12 mb-3">
                             <label for="person" class="form-label">Recibido de / Pagado a</label>
-                            <input type="text" class="form-control" id="person" placeholder="Nombre de la persona o entidad (Opcional)">
+                            <input type="text" class="form-control" id="person" placeholder="Nombre de la persona o entidad" required>
                         </div>
                     </div>
                     <div class="row">
@@ -220,16 +220,18 @@
                             <label for="fund" class="form-label">Fondo Asignado</label>
                             <select id="fund" class="form-select" required>
                                 <option value="Fondo Local">Fondo Local</option>
-                                <option value="Dorcas">Dorcas</option>
+                                <option value="Asamblea">Asamblea</option>
+                                <option value="Caballeros">Caballeros</option>
+                                <option value="Construccion">Construcción</option>
+                                <option value="Culto de sector">Culto de sector</option>
+                                <option value="Dorcas">Damas Dorcas</option>
+                                <option value="EVB">EVB</option>
+                                <option value="Escuela Dominical">Escuela Dominical</option>
                                 <option value="Jóvenes">Jóvenes</option>
                                 <option value="Misiones">Misiones</option>
-                                <option value="Caballeros">Caballeros</option>
                                 <option value="Musica">Música</option>
-                                <option value="Escuela Dominical">Escuela Dominical</option>
-                               <option value="Asamblea">Asamblea</option>
-                                <option value="EVB">EVB</option>
                                 <option value="Obra Social">Obra Social</option>
-                                <option value="Construccion">Construcción</option>
+                               
                             </select>
                         </div>
                     </div>
@@ -250,7 +252,7 @@
                     </select>
                 </div>
                 <button class="btn btn-info btn-sm me-2 mb-2" title="Realizar conteo de efectivo" onclick="openCashReconciliation()">Arqueo de Caja</button>
-                <button class="btn btn-secondary btn-sm me-2 mb-2" title="Exportar vista actual a CSV" onclick="exportToCSV()">Exportar a CSV</button>
+                <button class="btn btn-secondary btn-sm me-2 mb-2" title="Exportar vista actual a CSV" onclick="exportToCSV()">Exportar</button>
                 <button class="btn btn-danger btn-sm mb-2" title="Eliminar todos los registros permanentemente" onclick="clearHistory()">Limpiar Historial</button>
             </div>
         </div>
@@ -262,7 +264,7 @@
                             <tr>
                                 <th>Fecha</th>
                                 <th>Concepto</th>
-                                <th>Recibido de / Pagado a</th>
+                                <th>Recibido de/Pagado a</th>
                                 <th>Tipo</th>
                                 <th>Monto</th>
                                 <th>Fondo</th>
@@ -828,5 +830,6 @@
     </script>
 </body>
 </html>
+
 
 
