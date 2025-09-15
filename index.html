@@ -1,1060 +1,1100 @@
+
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contabilidad Online</title>
-    <!-- Bootstrap CSS -->
-    <link href="./libs/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 1000px;
-        }
-        .receipt {
-            border: 1px solid #dee2e6;
-            padding: 2rem;
-            background-color: #fff;
-        }
-        .receipt-header {
-            text-align: center;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #000;
-            padding-bottom: 1rem;
-        }
-        .receipt-body p {
-            font-size: 1.1rem;
-        }
-        @media print {
-            body * {
-                visibility: hidden;
+    <title>Asistencia a Cultos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .dark {
+                --color-bg-primary: #1a202c;
+                --color-bg-secondary: #2d3748;
+                --color-text-primary: #f7fafc;
+                --color-text-secondary: #e2e8f0;
+                --color-accent: #81e6d9;
             }
-            .print-section, .print-section * {
-                visibility: visible;
+            .light {
+                --color-bg-primary: #ffffff;
+                --color-bg-secondary: #edf2f7;
+                --color-text-primary: #2d3748;
+                --color-text-secondary: #4a5568;
+                --color-accent: #4299e1;
             }
-            .print-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-            }
-            .modal-footer {
-                display: none;
-            }
-            .modal-header .btn-close { display: none; }
-        }
-        /* --- Mejoras Visuales --- */
-        /* Resaltar tarjetas de resumen al pasar el mouse */
-        .card.bg-success:hover, .card.bg-danger:hover, .card.bg-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-            transition: all 0.2s ease-out;
-        }
-        /* Resaltar campos de formulario al enfocarlos */
-        .form-control:focus, .form-select:focus {
-            background-color: #eef5ff;
-        }
-
-        /* --- Dark Mode Styles --- */
-        body.dark-mode {
-            background-color: #1a1a1a; /* Más oscuro para mayor contraste */
-            color: #e9ecef; /* Texto más claro */
-        }
-        body.dark-mode .card {
-            background-color: #2b2b2b; /* Un poco más claro que el fondo */
-            border-color: #444;
-        }
-        body.dark-mode .card-header, body.dark-mode .modal-header, body.dark-mode .modal-footer, body.dark-mode .border-top {
-            border-color: #444 !important;
-        }
-        body.dark-mode .table {
-            color: #e9ecef;
-        }
-        body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
-            background-color: rgba(255, 255, 255, 0.07); /* Rayas de tabla más visibles */
-        }
-        body.dark-mode .table-hover > tbody > tr:hover > * {
-            background-color: rgba(255, 255, 255, 0.1); /* Hover de tabla más visible */
-        }
-        body.dark-mode .form-control, body.dark-mode .form-select {
-            background-color: #3a3a3a;
-            color: #fff;
-            border-color: #555;
-        }
-        body.dark-mode .form-control::placeholder {
-            color: #999;
-        }
-        body.dark-mode .form-control:focus, body.dark-mode .form-select:focus {
-            background-color: #3a3a3a;
-            border-color: #0d6efd; /* Resaltar foco con color primario de Bootstrap */
-            box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-        }
-        body.dark-mode .input-group-text {
-            background-color: #3a3a3a;
-            border-color: #555;
-            color: #e9ecef;
-        }
-        body.dark-mode .text-muted {
-            color: #999 !important;
-        }
-        body.dark-mode .modal-content {
-            background-color: #2b2b2b;
-        }
-        body.dark-mode .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%);
-        }
-        body.dark-mode .bg-light {
-            background-color: #383838 !important;
-            color: #fff !important;
-        }
-        body.dark-mode .btn-outline-secondary {
-            color: #e9ecef;
-            border-color: #555;
-        }
-        body.dark-mode .btn-outline-secondary:hover {
-            background-color: #3a3a3a;
-            color: #fff;
-        }
-
-        /* Ocultar flechas de aumento/disminución en campos de número */
-        input[type=number] {
-            -moz-appearance: textfield; /* Firefox */
-        }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0;
         }
     </style>
-</head>
-<body>
-
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="mb-0">Sistema de Contabilidad Local</h1>
-            <button id="theme-toggle" class="btn btn-outline-secondary btn-sm">Cambiar Tema</button>
-        </div>
- 
-        <!-- Reportes y Totales -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 id="totals-title" class="mb-0">Resumen General</h4>
-            </div>
-            <div class="card-body">
-                <div class="row text-center">
-                    <div class="col-md-4 mb-3 mb-md-0">
-                        <div class="card text-white bg-success">
-                            <div class="card-body">
-                                <h4 class="card-title">Total Ingresos</h4>
-                        <p class="card-text fs-4 fw-bold" id="total-income">$0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3 mb-md-0">
-                        <div class="card text-white bg-danger">
-                            <div class="card-body">
-                                <h4 class="card-title">Total Egresos</h4>
-                        <p class="card-text fs-4 fw-bold" id="total-expenses">$0</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card text-white bg-primary">
-                            <div class="card-body">
-                                <h4 class="card-title">Saldo Total</h4>
-                        <p class="card-text fs-4 fw-bold" id="total-balance">$0</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard de Fondos (Colapsable) -->
-        <div class="mb-4">
-            <p>
-                <a class="btn btn-outline-primary w-100" data-bs-toggle="collapse" href="#fundsDashboardCollapse" role="button" aria-expanded="false" aria-controls="fundsDashboardCollapse">
-                    Ver/Ocultar Dashboard de Fondos
-                </a>
-            </p>
-            <div class="collapse" id="fundsDashboardCollapse">
-                <div class="card card-body">
-                    <h4 class="mb-3 text-center">Saldos por Fondo</h4>
-                    <div class="row" id="funds-dashboard">
-                        <!-- Las tarjetas de fondos se insertarán aquí con JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Formulario de Ingreso -->
-        <div class="card mb-5">
-            <div class="card-header">
-                <h3 id="form-title">Ingresar Asiento Contable</h3>
-            </div>
-            <div class="card-body">
-                <form id="accounting-form">
-                    <input type="hidden" id="edit-id">
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="date" class="form-label">Fecha</label>
-                            <input type="date" class="form-control" id="date" required>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="receipt-number" class="form-label">Nro. Recibo</label>
-                            <input type="text" class="form-control" id="receipt-number" placeholder="Opcional">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="concept" class="form-label">Concepto</label>
-                            <input type="text" class="form-control" id="concept" placeholder="Ej: Ofrenda, Donación, Compra de sillas" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <label for="person" class="form-label">Recibido de / Pagado a</label>
-                            <input type="text" class="form-control" id="person" placeholder="Nombre de la persona o entidad" required>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-3 mb-3">
-                            <label for="type" class="form-label">Tipo de Movimiento</label>
-                            <select id="type" class="form-select" required>
-                                <option value="Ingreso">Ingreso</option>
-                                <option value="Egreso">Egreso</option>
-                            </select>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <label for="amount" class="form-label">Monto</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="amount" min="0" placeholder="0" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label for="fund" class="form-label mb-0">Fondo Asignado</label>
-                                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#manageFundsModal">Gestionar</button>
-                            </div>
-                            <select id="fund" class="form-select" required>
-                                <!-- Las opciones se llenarán con JS -->
-                            </select>
-                        </div>
-                    </div>
-                    <button type="submit" id="form-submit-button" class="btn btn-primary">Guardar Asiento</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Historial de Asientos -->
-        <div class="row align-items-center mb-3 gy-2">
-            <div class="col-lg-4">
-                <h2 class="mb-0">Historial de Asientos</h2>
-            </div>
-            <div class="col-lg-8">
-                <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-lg-end">
-                    <div class="me-2 mb-2 mb-md-0">
-                        <label for="fund-filter" class="form-label-sm me-1">Fondo:</label>
-                        <select id="fund-filter" class="form-select form-select-sm w-auto d-inline-block">
-                            <option value="all">Todos los Fondos</option>
-                            <!-- Opciones se llenarán con JS -->
-                        </select>
-                    </div>
-                    <div class="me-2 mb-2 mb-md-0">
-                        <label for="type-filter" class="form-label-sm me-1">Tipo:</label>
-                        <select id="type-filter" class="form-select form-select-sm w-auto d-inline-block">
-                            <option value="all">Todos los Tipos</option>
-                            <option value="Ingreso">Ingresos</option>
-                            <option value="Egreso">Egresos</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-info btn-sm me-2 mb-2 mb-md-0" title="Realizar conteo de efectivo" onclick="openCashReconciliation()">Arqueo de Caja</button>
-                    <button class="btn btn-secondary btn-sm me-2 mb-2 mb-md-0" title="Exportar vista actual a CSV" onclick="exportToCSV()">Exportar</button>
-                    <button class="btn btn-danger btn-sm" title="Eliminar todos los registros permanentemente" onclick="clearHistory()">Limpiar Historial</button>
-                </div>
-            </div>
-        </div>
-        <div class="card mb-5">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Nro. Recibo</th>
-                                <th>Concepto</th>
-                                <th>Recibido de / Pagado a</th>
-                                <th>Tipo</th>
-                                <th>Monto</th>
-                                <th>Fondo</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="history-table-body">
-                            <!-- Las filas se insertarán aquí con JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <footer class="text-center text-muted py-4 border-top">
-            <a href="#" data-bs-toggle="modal" data-bs-target="#documentationModal">
-                Ver Uso y Características
-            </a>
-        </footer>
-    </div>
-
-    <!-- Modal para el Recibo -->
-    <div class="modal fade" id="receiptModal" tabindex="-1" aria-labelledby="receiptModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="receiptModalLabel">Recibo</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body" id="receipt-content">
-                    <!-- El contenido del recibo se generará aquí -->
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="printContent('receipt-content')">Imprimir Recibo</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Arqueo de Caja -->
-    <div class="modal fade" id="cashReconciliationModal" tabindex="-1" aria-labelledby="cashReconciliationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="cashReconciliationModalLabel">Arqueo de Caja</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="reconciliation-print-area">
-                        <h3 class="text-center mb-4">Arqueo de Caja</h3>
-                        <div class="row mb-3">
-                            <div class="col-6">
-                                <h5>Saldo en Sistema:</h5>
-                                <p class="fs-4 fw-bold" id="system-balance">$0</p>
-                            </div>
-                            <div class="col-6">
-                                <h5>Diferencia:</h5>
-                                <p class="fs-4 fw-bold" id="balance-difference">$0</p>
-                            </div>
-                        </div>
-                        <h5>Conteo de Efectivo Físico</h5>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Denominación</th>
-                                        <th>Cantidad</th>
-                                        <th>Subtotal</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="denomination-table">
-                                    <!-- Filas generadas por JS -->
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th colspan="2" class="text-end">Total Efectivo Físico:</th>
-                                        <th id="physical-total">$0</th>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-primary" onclick="printContent('reconciliation-print-area')">Imprimir Arqueo</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Documentación -->
-    <div class="modal fade" id="documentationModal" tabindex="-1" aria-labelledby="documentationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="documentationModalLabel">Ayuda y Documentación</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h4>Características Principales</h4>
-                    <ul class="list-group mb-4">
-                        <li class="list-group-item"><strong>Gestión de Asientos:</strong> Crear, editar y visualizar asientos contables.</li>
-                        <li class="list-group-item"><strong>Resumen Financiero:</strong> Visualiza totales de ingresos, egresos y el saldo en tiempo real.</li>
-                        <li class="list-group-item"><strong>Filtrado por Fondos:</strong> Filtra los asientos y los totales por fondos específicos.</li>
-                        <li class="list-group-item"><strong>Generación de Recibos:</strong> Genera e imprime recibos detallados.</li>
-                        <li class="list-group-item"><strong>Arqueo de Caja:</strong> Herramienta para facilitar el conteo de efectivo.</li>
-                        <li class="list-group-item"><strong>Exportación a CSV:</strong> Exporta la vista actual a un archivo `.csv`.</li>
-                        <li class="list-group-item"><strong>Persistencia de Datos:</strong> Los datos se guardan localmente en tu navegador.</li>
-                    </ul>
-
-                    <h4>¿Cómo usarlo?</h4>
-                    <p>La aplicación está diseñada para ser intuitiva. Sigue estos pasos para comenzar:</p>
-                    <ol class="list-group list-group-numbered mb-4">
-                        <li class="list-group-item">Usa el formulario "Nuevo Asiento Contable" para registrar ingresos o egresos.</li>
-                        <li class="list-group-item">Los registros aparecerán en el "Historial de Asientos".</li>
-                        <li class="list-group-item">Usa los botones en el historial para "Editar" o "Ver Recibo" de una transacción.</li>
-                        <li class="list-group-item">Filtra por fondo o usa las herramientas como "Arqueo de Caja" y "Exportar" según necesites.</li>
-                    </ol>
-
-                    <div class="alert alert-warning" role="alert">
-                        <h4 class="alert-heading">¡Importante! Sobre el Almacenamiento de Datos</h4>
-                        <p>Esta aplicación utiliza el almacenamiento local (`localStorage`) de tu navegador. Esto significa:</p>
-                        <hr>
-                        <ul>
-                            <li>Los datos son locales: La información se almacena <strong>únicamente en la computadora y el navegador</strong> que estás utilizando. No se sincroniza entre dispositivos.</li>
-                            <li><strong>Riesgo de pérdida de datos:</strong> Si limpias los datos de tu navegador (caché, historial, etc.), <strong>perderás toda la información contable registrada</strong>.</li>
-                            <li>Se recomienda encarecidamente utilizar la función <strong>"Exportar"</strong> de forma regular para crear copias de seguridad.</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal para Gestionar Fondos -->
-    <div class="modal fade" id="manageFundsModal" tabindex="-1" aria-labelledby="manageFundsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="manageFundsModalLabel">Gestionar Fondos</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="new-fund-name" class="form-label">Añadir Nuevo Fondo</label>
-                        <div class="input-group">
-                            <input type="text" id="new-fund-name" class="form-control" placeholder="Nombre del nuevo fondo">
-                            <button class="btn btn-primary" type="button" id="add-fund-btn">Añadir</button>
-                        </div>
-                    </div>
-                    <hr>
-                    <h6>Fondos Existentes</h6>
-                    <ul class="list-group" id="funds-list">
-                        <!-- La lista de fondos se generará aquí -->
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap JS -->
-    <script src="./libs/js/bootstrap.bundle.min.js"></script>
-
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('accounting-form');
-            const historyTableBody = document.getElementById('history-table-body');
-            const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-            const receiptContent = document.getElementById('receipt-content');
-            const formTitle = document.getElementById('form-title');
-            const formSubmitButton = document.getElementById('form-submit-button');
-            const fundFilter = document.getElementById('fund-filter');
-            const typeFilter = document.getElementById('type-filter');
-            const totalsTitle = document.getElementById('totals-title');
-            const cashReconciliationModal = new bootstrap.Modal(document.getElementById('cashReconciliationModal'));
-            const fundSelect = document.getElementById('fund');
-            const themeToggle = document.getElementById('theme-toggle');
-            const body = document.body;
-            const manageFundsModalEl = document.getElementById('manageFundsModal');
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: 'var(--color-bg-primary)',
+                        secondary: 'var(--color-bg-secondary)',
+                        txtprimary: 'var(--color-text-primary)',
+                        txtsecondary: 'var(--color-text-secondary)',
+                        accent: 'var(--color-accent)',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
 
-            const defaultFunds = [
-                "Fondo Local", "Asamblea", "Caballeros", "Construcción", 
-                "Culto de sector", "Dorcas", "EVB", "Escuela Dominical", 
-                "Jóvenes", "Misiones", "Música", "Obra Social"
-            ];
+<body class="min-h-screen bg-primary text-txtprimary transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-accent">
+                <i class="fa-solid fa-hotel"></i>
+                Control de Asistencia
+            </h1>
+            <div>
+                <button id="themeToggle" class="p-2 rounded-full bg-secondary hover:bg-accent hover:text-primary transition">
+                    <i class="fas fa-moon dark:hidden"></i>
+                    <i class="fas fa-sun hidden dark:inline"></i>
+                </button>
+            </div>
+        </header>
 
-            // --- Gestión de Fondos ---
-            const getFunds = () => {
-                const fundsJSON = localStorage.getItem('accountingFunds');
-                if (fundsJSON) {
-                    const funds = JSON.parse(fundsJSON);
-                    // Se asegura de que la lista de fondos siempre esté ordenada con "Fondo Local" al principio.
-                    // Esto corrige el problema para usuarios con datos guardados antes del cambio.
-                    funds.sort((a, b) => {
-                        if (a === 'Fondo Local') return -1;
-                        if (b === 'Fondo Local') return 1;
-                        return a.localeCompare(b);
-                    });
-                    return funds;
-                } else {
-                    // First time setup: combine default funds with any funds from existing entries for a smooth migration.
-                    const existingEntries = getEntries();
-                    const fundsFromEntries = existingEntries.map(entry => entry.fund);
-                    // Use a Set to get unique values, and filter out any empty/null fund names.
-                    const combinedFunds = [...new Set([...defaultFunds, ...fundsFromEntries])].filter(f => f);
+        <!-- Main Form -->
+        <main class="bg-secondary rounded-lg shadow-xl p-6 mb-8">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Service Type and Date -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-txtsecondary mb-2">Tipo de Servicio</label>
+                        <select id="serviceType" class="w-full p-3 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                            <option value="">Seleccionar...</option>
+                            <option value="Escuela Dominical">Escuela Dominical</option>
+                            <option value="Culto Evangelístico">Culto Evangelístico</option>
+                            <option value="Culto de Oración">Culto de Oración</option>
+                            <option value="Culto de Dorcas">Culto de Dorcas</option>
+                            <option value="Culto de Caballeros">Culto de Caballeros</option>
+                            <option value="Culto de Jóvenes">Culto de Jóvenes</option>
+                            <option value="Culto Acción de Gracias">Culto Acción de Gracias</option>
+                            <option value="Culto música">Culto Música</option>
+                            <option value="Culto Campaña">Culto Campaña</option>
+                            <option value="Culto Especial">Culto Especial</option>
+                            <option value="Culto Misionero (Día)">Culto Misionero (Día)</option>
+                            <option value="Culto Misionero (Noche)">Culto Misionero (Noche)</option>
+                            <option value="Confraternidad Dorcas (Mitad de Año)">Confraternidad Dorcas (Mitad de Año)</option>
+                            <option value="Confraternidad Dorcas (Fin de Año)">Confraternidad Dorcas (Fin de Año)</option>
+                            <option value="Confraternidad Jóvenes (Mitad de Año)">Confraternidad Jóvenes (Mitad de Año)</option>
+                            <option value="Confraternidad Jóvenes (Fin de Año)">Confraternidad Jóvenes (Fin de Año)</option>
+                        </select>
+                    </div>
                     
-                    saveFunds(combinedFunds);
-                    return combinedFunds;
-                }
-            };
-
-            const saveFunds = (funds) => {
-                // Siempre guardar ordenado alfabéticamente, pero manteniendo "Fondo Local" al principio.
-                funds.sort((a, b) => {
-                    if (a === 'Fondo Local') return -1;
-                    if (b === 'Fondo Local') return 1;
-                    return a.localeCompare(b);
-                });
-                localStorage.setItem('accountingFunds', JSON.stringify(funds));
-            };
-
-            const populateFundSelects = () => {
-                const funds = getFunds();
-                const currentFundValue = fundSelect.value;
-                const currentFilterValue = fundFilter.value;
-
-                fundSelect.innerHTML = '';
-                fundFilter.innerHTML = '<option value="all">Todos los Fondos</option>';
-
-                funds.forEach(fundName => {
-                    const option = new Option(fundName, fundName);
-                    fundSelect.add(option.cloneNode(true));
-                    fundFilter.add(option.cloneNode(true));
-                });
-
-                // Restore previous selection if possible, otherwise default.
-                fundSelect.value = funds.includes(currentFundValue) ? currentFundValue : (funds[0] || '');
-                fundFilter.value = funds.includes(currentFilterValue) ? currentFilterValue : 'all';
-            };
-
-            const renderFundsList = () => {
-                const fundsList = document.getElementById('funds-list');
-                const funds = getFunds();
-                fundsList.innerHTML = '';
-
-                funds.forEach(fund => {
-                    const li = document.createElement('li');
-                    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                    li.dataset.fundName = fund;
-                    li.innerHTML = `
-                        <span class="fund-name">${fund}</span>
-                        <div>
-                            <button class="btn btn-warning btn-sm me-2" onclick="startFundEdit(this)">Editar</button>
-                            <button class="btn btn-danger btn-sm" onclick="deleteFund('${fund}')">Eliminar</button>
+                    <div>
+                        <label class="block text-txtsecondary mb-2">Fecha</label>
+                        <input type="date" id="serviceDate" class="w-full p-3 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-txtsecondary mb-2">Quién dirigió</label>
+                        <input type="text" id="serviceLeader" class="w-full p-3 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-txtsecondary mb-2">Quién predicó</label>
+                        <input type="text" id="servicePreacher" class="w-full p-3 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-txtsecondary mb-2">Ofrenda ($)</label>
+                        <input type="number" id="serviceOffering" class="w-full p-3 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none" min="0" step="100">
+                    </div>
+                </div>
+                
+                <!-- Attendance -->
+                <div class="space-y-4">
+                    <h3 class="text-xl font-semibold mb-4">Asistencia</h3>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-txtsecondary">Hermanos</label>
+                        <div class="flex items-center">
+                            <button class="decrement bg-primary w-8 h-8 rounded-l-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="brothers">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="brothers" class="bg-primary h-8 w-16 text-center border-t border-b border-gray-600" value="0" min="0">
+                            <button class="increment bg-primary w-8 h-8 rounded-r-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="brothers">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
-                    `;
-                    fundsList.appendChild(li);
-                });
-            };
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-txtsecondary">Hermanas</label>
+                        <div class="flex items-center">
+                            <button class="decrement bg-primary w-8 h-8 rounded-l-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="sisters">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="sisters" class="bg-primary h-8 w-16 text-center border-t border-b border-gray-600" value="0" min="0">
+                            <button class="increment bg-primary w-8 h-8 rounded-r-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="sisters">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-txtsecondary">Visitas</label>
+                        <div class="flex items-center">
+                            <button class="decrement bg-primary w-8 h-8 rounded-l-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="visitors">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="visitors" class="bg-primary h-8 w-16 text-center border-t border-b border-gray-600" value="0" min="0">
+                            <button class="increment bg-primary w-8 h-8 rounded-r-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="visitors">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <label class="text-txtsecondary">Niños</label>
+                        <div class="flex items-center">
+                            <button class="decrement bg-primary w-8 h-8 rounded-l-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="children">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="children" class="bg-primary h-8 w-16 text-center border-t border-b border-gray-600" value="0" min="0">
+                            <button class="increment bg-primary w-8 h-8 rounded-r-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="children">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
 
-            manageFundsModalEl.addEventListener('show.bs.modal', () => {
-                renderFundsList();
-                document.getElementById('new-fund-name').value = '';
-            });
+                    <div class="flex items-center justify-between">
+                        <label class="text-txtsecondary">Hermanos Visitantes</label>
+                        <div class="flex items-center">
+                            <button class="decrement bg-primary w-8 h-8 rounded-l-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="visitingBrothers">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="visitingBrothers" class="bg-primary h-8 w-16 text-center border-t border-b border-gray-600" value="0" min="0">
+                            <button class="increment bg-primary w-8 h-8 rounded-r-lg flex items-center justify-center hover:bg-accent hover:text-primary" data-target="visitingBrothers">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-primary rounded-lg">
+                        <h4 class="font-medium text-accent mb-2">Resumen Total</h4>
+                        <p class="flex justify-between">
+                            <span>Total Asistentes:</span>
+                            <span id="totalAttendees" class="font-bold">0</span>
+                        </p>
+                        <p class="flex justify-between">
+                            <span>Ofrenda:</span>
+                            <span id="totalOffering" class="font-bold">$0</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-4 mt-8">
+                <button id="saveBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+                <button id="clearBtn" class="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-eraser"></i> Limpiar
+                </button>
+                <button id="newBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg flex items-center justify-center gap-2 transition">
+                    <i class="fas fa-plus"></i> Nueva Toma
+                </button>
+            </div>
+        </main>
 
-            document.getElementById('add-fund-btn').addEventListener('click', () => {
-                const newFundNameInput = document.getElementById('new-fund-name');
-                const newName = newFundNameInput.value.trim();
-                if (!newName) {
-                    return alert('El nombre del fondo no puede estar vacío.');
+        <!-- Records Section -->
+        <section class="bg-secondary rounded-lg shadow-xl p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold text-accent">
+                    <i class="fas fa-history mr-2"></i>
+                    Registros Anteriores
+                </h2>
+                <div class="flex items-center gap-4">
+                    <button id="exportExcelBtn" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg flex items-center gap-2 transition text-sm">
+                        <i class="fas fa-file-excel"></i> Exportar a Excel
+                    </button>
+                    <div class="relative">
+                        <select id="filterRecords" class="p-2 rounded-lg bg-primary border border-gray-600 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                            <option value="all">Todos</option>
+                            <option value="Escuela Dominical">Escuela Dominical</option>
+                            <option value="Culto Evangelístico">Culto Evangelístico</option>
+                            <option value="Culto de Oración">Culto de Oración</option>
+                            <option value="Culto de Dorcas">Culto de Dorcas</option>
+                            <option value="Culto de Caballeros">Culto de Caballeros</option>
+                            <option value="Culto de Jóvenes">Culto de Jóvenes</option>
+                            <option value="Culto Acción de Gracias">Culto Acción de Gracias</option>
+                            <option value="Culto Campaña">Culto Campaña</option>
+                            <option value="Culto Especial">Culto Especial</option>
+                            <option value="Culto música">Culto Música</option>
+                            <option value="Culto Misionero (Día)">Culto Misionero (Día)</option>
+                            <option value="Culto Misionero (Noche)">Culto Misionero (Noche)</option>
+                            <option value="Confraternidad Dorcas (Mitad de Año)">Confraternidad Dorcas (Mitad de Año)</option>
+                            <option value="Confraternidad Dorcas (Fin de Año)">Confraternidad Dorcas (Fin de Año)</option>
+                            <option value="Confraternidad Jóvenes (Mitad de Año)">Confraternidad Jóvenes (Mitad de Año)</option>
+                            <option value="Confraternidad Jóvenes (Fin de Año)">Confraternidad Jóvenes (Fin de Año)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-primary rounded-lg overflow-hidden">
+                    <thead>
+                        <tr class="bg-accent text-primary">
+                            <th class="py-3 px-4 text-left">Fecha</th>
+                            <th class="py-3 px-4 text-left">Servicio</th>
+                            <th class="py-3 px-4 text-left">Dirigió</th>
+                            <th class="py-3 px-4 text-left">Predicó</th>
+                            <th class="py-3 px-4 text-center">Hermanos</th>
+                            <th class="py-3 px-4 text-center">Hermanas</th>
+                            <th class="py-3 px-4 text-center">Visitas</th>
+                            <th class="py-3 px-4 text-center">Niños</th>
+                            <th class="py-3 px-4 text-center">Hnos. Visitantes</th>
+                            <th class="py-3 px-4 text-center">Total</th>
+                            <th class="py-3 px-4 text-center">Ofrenda</th>
+                            <th class="py-3 px-4 text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recordsTable" class="divide-y divide-gray-600">
+                        <!-- Records will be inserted here dynamically -->
+                        <tr>
+                            <td colspan="12" class="py-4 text-center text-txtsecondary">No hay registros aún</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        
+        <!-- Stats Section -->
+        <section class="mt-8 grid md:grid-cols-3 gap-6">
+            <div class="bg-secondary rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-users text-accent"></i>
+                    Asistencia Promedio
+                </h3>
+                <div class="mb-4 p-4 bg-primary rounded-lg border border-gray-600">
+                    <h4 class="font-semibold mb-2 text-accent">Filtrar Promedios</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="statsFilterType" class="text-sm text-txtsecondary">Tipo de Culto</label>
+                            <select id="statsFilterType" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                                <option value="all">Todos</option>
+                                <option value="Escuela Dominical">Escuela Dominical</option>
+                                <option value="Culto Evangelístico">Culto Evangelístico</option>
+                                <option value="Culto de Oración">Culto de Oración</option>
+                                <option value="Culto de Dorcas">Culto de Dorcas</option>
+                                <option value="Culto de Caballeros">Culto de Caballeros</option>
+                                <option value="Culto de Jóvenes">Culto de Jóvenes</option>
+                                <option value="Culto Acción de Gracias">Culto Acción de Gracias</option>
+                                <option value="Culto música">Culto Música</option>
+                                <option value="Culto Campaña">Culto Campaña</option>
+                                <option value="Culto Especial">Culto Especial</option>
+                                <option value="Culto Misionero (Día)">Culto Misionero (Día)</option>
+                                <option value="Culto Misionero (Noche)">Culto Misionero (Noche)</option>
+                                <option value="Confraternidad Dorcas (Mitad de Año)">Confraternidad Dorcas (Mitad de Año)</option>
+                                <option value="Confraternidad Dorcas (Fin de Año)">Confraternidad Dorcas (Fin de Año)</option>
+                                <option value="Confraternidad Jóvenes (Mitad de Año)">Confraternidad Jóvenes (Mitad de Año)</option>
+                                <option value="Confraternidad Jóvenes (Fin de Año)">Confraternidad Jóvenes (Fin de Año)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="statsFilterStartDate" class="text-sm text-txtsecondary">Desde</label>
+                            <input type="date" id="statsFilterStartDate" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                        </div>
+                        <div>
+                            <label for="statsFilterEndDate" class="text-sm text-txtsecondary">Hasta</label>
+                            <input type="date" id="statsFilterEndDate" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button id="applyStatsFilterBtn" class="flex-1 bg-accent text-primary py-2 px-4 rounded-lg text-sm transition hover:opacity-80">Aplicar Filtro</button>
+                        <button id="resetStatsFilterBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg text-sm transition">Resetear</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="flex justify-between">
+                        <span>Prom. Hermanos:</span>
+                        <span id="avgBrothers" class="font-bold">0</span>
+                    </p>
+                    <p class="flex justify-between">
+                        <span>Prom. Hermanas:</span>
+                        <span id="avgSisters" class="font-bold">0</span>
+                    </p>
+                    <p class="flex justify-between">
+                        <span>Prom. Visitas:</span>
+                        <span id="avgVisitors" class="font-bold">0</span>
+                    </p>
+                    <p class="flex justify-between">
+                        <span>Prom. Niños:</span>
+                        <span id="avgChildren" class="font-bold">0</span>
+                    </p>
+                    <p class="flex justify-between">
+                        <span>Prom. Hnos. Visitantes:</span>
+                        <span id="avgVisitingBrothers" class="font-bold">0</span>
+                    </p>
+                    <div class="border-t border-gray-600 pt-2 mt-2">
+                        <p class="flex justify-between font-bold text-accent">
+                            <span>Promedio General:</span>
+                            <span id="avgGrandTotal">0</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-secondary rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-hand-holding-usd text-accent"></i>
+                    Ofrendas
+                </h3>
+                <div class="mb-4 p-4 bg-primary rounded-lg border border-gray-600">
+                    <h4 class="font-semibold mb-2 text-accent">Filtrar Ofrendas</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="offeringFilterType" class="text-sm text-txtsecondary">Tipo de Culto</label>
+                            <select id="offeringFilterType" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                                <option value="all">Todos</option>
+                                <option value="Escuela Dominical">Escuela Dominical</option>
+                                <option value="Culto Evangelístico">Culto Evangelístico</option>
+                                <option value="Culto de Oración">Culto de Oración</option>
+                                <option value="Culto de Dorcas">Culto de Dorcas</option>
+                                <option value="Culto de Caballeros">Culto de Caballeros</option>
+                                <option value="Culto de Jóvenes">Culto de Jóvenes</option>
+                                <option value="Culto Acción de Gracias">Culto Acción de Gracias</option>
+                                <option value="Culto música">Culto Música</option>
+                                <option value="Culto Campaña">Culto Campaña</option>
+                                <option value="Culto Especial">Culto Especial</option>
+                                <option value="Culto Misionero (Día)">Culto Misionero (Día)</option>
+                                <option value="Culto Misionero (Noche)">Culto Misionero (Noche)</option>
+                                <option value="Confraternidad Dorcas (Mitad de Año)">Confraternidad Dorcas (Mitad de Año)</option>
+                                <option value="Confraternidad Dorcas (Fin de Año)">Confraternidad Dorcas (Fin de Año)</option>
+                                <option value="Confraternidad Jóvenes (Mitad de Año)">Confraternidad Jóvenes (Mitad de Año)</option>
+                                <option value="Confraternidad Jóvenes (Fin de Año)">Confraternidad Jóvenes (Fin de Año)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="offeringFilterStartDate" class="text-sm text-txtsecondary">Desde</label>
+                            <input type="date" id="offeringFilterStartDate" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                        </div>
+                        <div>
+                            <label for="offeringFilterEndDate" class="text-sm text-txtsecondary">Hasta</label>
+                            <input type="date" id="offeringFilterEndDate" class="w-full mt-1 p-2 text-sm rounded-lg bg-secondary border border-gray-500 focus:border-accent focus:ring-2 focus:ring-accent outline-none">
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <button id="applyOfferingFilterBtn" class="flex-1 bg-accent text-primary py-2 px-4 rounded-lg text-sm transition hover:opacity-80">Aplicar Filtro</button>
+                        <button id="resetOfferingFilterBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg text-sm transition">Resetear</button>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <p class="flex justify-between">
+                        <span>Total Ofrendas:</span>
+                        <span id="totalAllOfferings" class="font-bold">$0</span>
+                    </p>
+                    <p class="text-sm text-txtsecondary">Promedio por culto:</p>
+                    <p id="averageOffering" class="text-center text-2xl font-bold text-accent mt-2">$0</p>
+                    <p class="text-xs text-center text-txtsecondary italic">(Según filtros aplicados)</p>
+                </div>
+            </div>
+            
+            <div class="bg-secondary rounded-lg shadow-xl p-6">
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-accent"></i>
+                    Distribución por Cultos
+                </h3>
+                <div class="grid grid-cols-2 gap-4 items-center">
+                    <div class="h-40 relative">
+                        <canvas id="servicesChart"></canvas>
+                    </div>
+                    <div id="chartLegend" class="text-xs space-y-1 overflow-y-auto max-h-40 pr-2">
+                        <!-- Legend items will be generated here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-secondary rounded-lg p-6 max-w-md w-full mx-4">
+            <div class="text-center">
+                <i class="fas fa-exclamation-circle text-5xl text-yellow-500 mb-4"></i>
+                <h3 class="text-xl font-bold mb-2" id="modalTitle">Confirmación</h3>
+                <p class="text-txtsecondary mb-6" id="modalMessage">¿Estás seguro de que deseas continuar?</p>
+            </div>
+            <div class="flex justify-center gap-4">
+                <button id="modalCancelBtn" class="px-6 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition">Cancelar</button>
+                <button id="modalConfirmBtn" class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="successToast" class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center gap-2 hidden z-50">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Operación exitosa</span>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const saveBtn = document.getElementById('saveBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const newBtn = document.getElementById('newBtn');
+        const modal = document.getElementById('confirmationModal');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+        const successToast = document.getElementById('successToast');
+        const filterRecords = document.getElementById('filterRecords');
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        const statsFilterType = document.getElementById('statsFilterType');
+        const statsFilterStartDate = document.getElementById('statsFilterStartDate');
+        const statsFilterEndDate = document.getElementById('statsFilterEndDate');
+        const applyStatsFilterBtn = document.getElementById('applyStatsFilterBtn');
+        const resetStatsFilterBtn = document.getElementById('resetStatsFilterBtn');
+        const offeringFilterType = document.getElementById('offeringFilterType');
+        const offeringFilterStartDate = document.getElementById('offeringFilterStartDate');
+        const offeringFilterEndDate = document.getElementById('offeringFilterEndDate');
+        const applyOfferingFilterBtn = document.getElementById('applyOfferingFilterBtn');
+        const resetOfferingFilterBtn = document.getElementById('resetOfferingFilterBtn');
+        
+        // Attendance counters
+        const brothersInput = document.getElementById('brothers');
+        const sistersInput = document.getElementById('sisters');
+        const visitorsInput = document.getElementById('visitors');
+        const childrenInput = document.getElementById('children');
+        const visitingBrothersInput = document.getElementById('visitingBrothers');
+        
+        // Summary elements
+        const totalAttendees = document.getElementById('totalAttendees');
+        const totalOffering = document.getElementById('totalOffering');
+        
+        // Stats elements
+        const avgBrothers = document.getElementById('avgBrothers');
+        const avgSisters = document.getElementById('avgSisters');
+        const avgVisitors = document.getElementById('avgVisitors');
+        const avgChildren = document.getElementById('avgChildren');
+        const avgVisitingBrothers = document.getElementById('avgVisitingBrothers');
+        const avgGrandTotal = document.getElementById('avgGrandTotal');
+        const totalAllOfferings = document.getElementById('totalAllOfferings');
+        const averageOffering = document.getElementById('averageOffering');
+        
+        // Records table
+        const recordsTable = document.getElementById('recordsTable');
+        
+        // Chart
+        let servicesChart;
+        const serviceTypesForChart = [
+            'Escuela Dominical', 'Culto Evangelístico', 'Culto de Oración', 'Culto de Dorcas',
+            'Culto de Caballeros', 'Culto de Jóvenes', 'Culto Acción de Gracias', 'Culto música',
+            'Culto Campaña', 'Culto Especial', 'Culto Misionero (Día)', 'Culto Misionero (Noche)',
+            'Confraternidad Dorcas (Mitad de Año)', 'Confraternidad Dorcas (Fin de Año)',
+            'Confraternidad Jóvenes (Mitad de Año)', 'Confraternidad Jóvenes (Fin de Año)'
+        ];
+        const chartColors = [
+            '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899',
+            '#14B8A6', '#F97316', '#6366F1', '#06B6D4', '#D946EF', '#22C55E',
+            '#84CC16', '#EAB308', '#78716c', '#f43f5e'
+        ];
+        
+        // App state
+        let records = JSON.parse(localStorage.getItem('churchAttendanceRecords')) || [];
+        let currentAction = '';
+        let editingRecordId = null;
+        
+        // Initialize theme
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+        
+        // Event Listeners
+        themeToggle.addEventListener('click', toggleTheme);
+        saveBtn.addEventListener('click', () => showConfirmation('guardar esta toma de asistencia'));
+        clearBtn.addEventListener('click', () => showConfirmation('limpiar el formulario', 'warning'));
+        newBtn.addEventListener('click', startNewRecord);
+        modalCancelBtn.addEventListener('click', hideConfirmation);
+        modalConfirmBtn.addEventListener('click', confirmAction);
+        exportExcelBtn.addEventListener('click', exportToExcel);
+        filterRecords.addEventListener('change', filterRecordsTable);
+        applyStatsFilterBtn.addEventListener('click', applyStatsFilter);
+        resetStatsFilterBtn.addEventListener('click', resetStatsFilter);
+        applyOfferingFilterBtn.addEventListener('click', applyOfferingFilter);
+        resetOfferingFilterBtn.addEventListener('click', resetOfferingFilter);
+        
+        // Attendance buttons
+        document.querySelectorAll('.increment').forEach(btn => {
+            btn.addEventListener('click', () => changeCounter(btn.dataset.target, 1));
+        });
+        
+        document.querySelectorAll('.decrement').forEach(btn => {
+            btn.addEventListener('click', () => changeCounter(btn.dataset.target, -1));
+        });
+        
+        // Input changes
+        [brothersInput, sistersInput, visitorsInput, childrenInput, visitingBrothersInput].forEach(input => {
+            input.addEventListener('change', updateTotalAttendees);
+        });
+        
+        document.getElementById('serviceOffering').addEventListener('input', updateOfferingDisplay);
+        
+        // Initial setup
+        updateStats();
+        renderRecordsTable();
+        updateTotalAttendees();
+        updateOfferingDisplay();
+        initializeChart();
+        
+        // Functions
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+        
+        function changeCounter(target, change) {
+            const input = document.getElementById(target);
+            let value = parseInt(input.value) + change;
+            value = Math.max(0, value);
+            input.value = value;
+            updateTotalAttendees();
+        }
+        
+        function updateTotalAttendees() {
+            const brothers = parseInt(brothersInput.value) || 0;
+            const sisters = parseInt(sistersInput.value) || 0;
+            const visitors = parseInt(visitorsInput.value) || 0;
+            const children = parseInt(childrenInput.value) || 0;
+            const visitingBrothers = parseInt(visitingBrothersInput.value) || 0;
+            
+            const total = brothers + sisters + visitors + children + visitingBrothers;
+            totalAttendees.textContent = total;
+        }
+        
+        function updateOfferingDisplay() {
+            const offering = parseInt(document.getElementById('serviceOffering').value) || 0;
+            totalOffering.textContent = `$${offering.toLocaleString()}`;
+        }
+        
+        function showConfirmation(action, type = 'info') {
+            currentAction = action;
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            
+            if (editingRecordId !== null && action.includes('guardar')) {
+                modalTitle.textContent = 'Actualizar Registro';
+                modalMessage.textContent = `¿Estás seguro de que deseas actualizar este registro con los datos del formulario?`;
+                currentAction = 'actualizar';
+            } else if (type === 'warning') {
+                modalTitle.textContent = 'Confirmar Acción';
+                modalMessage.textContent = `¿Estás seguro de que deseas ${action}? Se perderán los datos no guardados.`;
+            } else {
+                modalTitle.textContent = 'Guardar Registro';
+                modalMessage.textContent = `¿Estás seguro de que deseas ${action}?`;
+            }
+            
+            modal.classList.remove('hidden');
+        }
+        
+        function hideConfirmation() {
+            modal.classList.add('hidden');
+        }
+        
+        function confirmAction() {
+            hideConfirmation();
+            
+            if (currentAction.includes('guardar') || currentAction === 'actualizar') {
+                saveRecord();
+            } else if (currentAction.includes('limpiar')) {
+                clearForm();
+            } else if (currentAction === 'delete') {
+                const idToDelete = parseInt(modalConfirmBtn.dataset.recordId);
+                deleteRecord(idToDelete);
+            }
+        }
+        
+        function saveRecord() {
+            const serviceType = document.getElementById('serviceType').value;
+            const serviceDate = document.getElementById('serviceDate').value;
+            const serviceLeader = document.getElementById('serviceLeader').value;
+            const servicePreacher = document.getElementById('servicePreacher').value;
+            const serviceOffering = parseInt(document.getElementById('serviceOffering').value) || 0;
+            const brothers = parseInt(brothersInput.value) || 0;
+            const sisters = parseInt(sistersInput.value) || 0;
+            const visitors = parseInt(visitorsInput.value) || 0;
+            const children = parseInt(childrenInput.value) || 0;
+            const visitingBrothers = parseInt(visitingBrothersInput.value) || 0;
+            
+            if (!serviceType || !serviceDate) {
+                showToast('Debes completar tipo de servicio y fecha', 'error');
+                return;
+            }
+            
+            if (editingRecordId !== null) {
+                // Update existing record
+                const recordIndex = records.findIndex(r => r.id === editingRecordId);
+                if (recordIndex > -1) {
+                    records[recordIndex] = {
+                        ...records[recordIndex], // Keep original id and timestamp
+                        type: serviceType,
+                        date: serviceDate,
+                        leader: serviceLeader,
+                        preacher: servicePreacher,
+                        offering: serviceOffering,
+                        brothers: brothers,
+                        sisters: sisters,
+                        visitors: visitors,
+                        children: children,
+                        visitingBrothers: visitingBrothers,
+                    };
+                    showToast('Registro actualizado exitosamente');
                 }
+            } else {
+                // Create new record
+                const record = {
+                    id: Date.now(),
+                    type: serviceType,
+                    date: serviceDate,
+                    leader: serviceLeader,
+                    preacher: servicePreacher,
+                    offering: serviceOffering,
+                    brothers: brothers,
+                    sisters: sisters,
+                    visitors: visitors,
+                    children: children,
+                    visitingBrothers: visitingBrothers,
+                    timestamp: new Date().toISOString()
+                };
+                records.push(record);
+                showToast('Registro guardado exitosamente');
+            }
 
-                const funds = getFunds();
-                if (funds.map(f => f.toLowerCase()).includes(newName.toLowerCase())) {
-                    return alert('Ya existe un fondo con este nombre.');
-                }
-
-                funds.push(newName);
-                saveFunds(funds);
-                newFundNameInput.value = '';
-                populateFundSelects();
-                renderFundsList();
-                updateDisplay();
-                alert(`Fondo "${newName}" añadido.`);
+            localStorage.setItem('churchAttendanceRecords', JSON.stringify(records));
+            
+            updateAttendanceStats();
+            updateOfferingStats();
+            renderRecordsTable();
+            updateChart();
+            clearForm();
+        }
+        
+        function clearForm() {
+            document.getElementById('serviceType').value = '';
+            document.getElementById('serviceDate').value = '';
+            document.getElementById('serviceLeader').value = '';
+            document.getElementById('servicePreacher').value = '';
+            document.getElementById('serviceOffering').value = '';
+            
+            brothersInput.value = '0';
+            sistersInput.value = '0';
+            visitorsInput.value = '0';
+            childrenInput.value = '0';
+            visitingBrothersInput.value = '0';
+            
+            editingRecordId = null;
+            saveBtn.innerHTML = `<i class="fas fa-save"></i> Guardar`;
+            
+            updateTotalAttendees();
+            updateOfferingDisplay();
+        }
+        
+        function startNewRecord() {
+            clearForm();
+            document.getElementById('serviceType').focus();
+        }
+        
+        function showToast(message, type = 'success') {
+            const toastMessage = document.getElementById('toastMessage');
+            toastMessage.textContent = message;
+            
+            if (type === 'error') {
+                successToast.classList.remove('bg-green-600');
+                successToast.classList.add('bg-red-600');
+            } else {
+                successToast.classList.remove('bg-red-600');
+                successToast.classList.add('bg-green-600');
+            }
+            
+            successToast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                successToast.classList.add('hidden');
+            }, 3000);
+        }
+        
+        function renderRecordsTable() {
+            const filterValue = filterRecords.value;
+            let filteredRecords = records;
+            
+            if (filterValue !== 'all') {
+                filteredRecords = records.filter(record => record.type === filterValue);
+            }
+            
+            if (filteredRecords.length === 0) {
+                recordsTable.innerHTML = `
+                    <tr>
+                        <td colspan="12" class="py-4 text-center text-txtsecondary">
+                            No hay registros ${filterValue !== 'all' ? 'para este tipo de servicio' : 'aún'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            recordsTable.innerHTML = '';
+            
+            filteredRecords.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(record => {
+                const total = record.brothers + record.sisters + record.visitors + record.children + (record.visitingBrothers || 0);
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-700 transition';
+                row.innerHTML = `
+                    <td class="py-3 px-4">${formatDate(record.date)}</td>
+                    <td class="py-3 px-4">${record.type}</td>
+                    <td class="py-3 px-4">${record.leader || '-'}</td>
+                    <td class="py-3 px-4">${record.preacher || '-'}</td>
+                    <td class="py-3 px-4 text-center">${record.brothers}</td>
+                    <td class="py-3 px-4 text-center">${record.sisters}</td>
+                    <td class="py-3 px-4 text-center">${record.visitors}</td>
+                    <td class="py-3 px-4 text-center">${record.children}</td>
+                    <td class="py-3 px-4 text-center">${record.visitingBrothers || 0}</td>
+                    <td class="py-3 px-4 text-center font-bold">${total}</td>
+                    <td class="py-3 px-4 text-center">$${record.offering.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="edit-btn p-1 text-blue-400 hover:text-blue-200 transition" data-id="${record.id}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="delete-btn p-1 text-red-400 hover:text-red-200 transition" data-id="${record.id}" title="Eliminar">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                
+                recordsTable.appendChild(row);
             });
             
-            const formatNumber = (value) => {
-                return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
-            };
-
-
-            const getEntries = () => {
-                return JSON.parse(localStorage.getItem('accountingEntries')) || [];
-            };
-
-            const saveEntries = (entries) => {
-                localStorage.setItem('accountingEntries', JSON.stringify(entries));
-            };
-
-            const calculateAndRenderTotals = (entries) => {
-                let totalIncome = 0;
-                let totalExpenses = 0;
-
-                entries.forEach(entry => {
-                    const amount = parseFloat(entry.amount);
-                    if (entry.type === 'Ingreso') {
-                        totalIncome += amount;
-                    } else {
-                        totalExpenses += amount;
-                    }
+            // Add event listeners to edit buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recordId = parseInt(btn.dataset.id);
+                    startEditRecord(recordId);
                 });
-
-                const balance = totalIncome - totalExpenses;
-
-                document.getElementById('total-income').textContent = `$${formatNumber(totalIncome)}`;
-                document.getElementById('total-expenses').textContent = `$${formatNumber(totalExpenses)}`;
-                
-                const balanceEl = document.getElementById('total-balance');
-                balanceEl.textContent = `$${formatNumber(balance)}`;
-                
-                const balanceCard = balanceEl.closest('.card');
-                balanceCard.className = 'card text-white'; // Reset classes
-                balanceCard.classList.add(balance >= 0 ? 'bg-primary' : 'bg-danger');
-            };
-
-            const renderEntries = (entries) => {
-                historyTableBody.innerHTML = '';
-                // Mostrar los más recientes primero
-                entries.slice().reverse().forEach(entry => {
-                    const row = document.createElement('tr');
-                    
-                    const typeClass = entry.type === 'Ingreso' ? 'text-success' : 'text-danger';
-                    const sign = entry.type === 'Ingreso' ? '+' : '-';
-
-                    row.innerHTML = `
-                        <td>${entry.date}</td>
-                        <td>${entry.receiptNumber || ''}</td>
-                        <td>${entry.concept}</td>
-                        <td>${entry.person || ''}</td>
-                        <td><span class="fw-bold ${typeClass}">${entry.type}</span></td>
-                        <td><span class="fw-bold ${typeClass}">${sign}$${formatNumber(parseFloat(entry.amount))}</span></td>
-                        <td>${entry.fund}</td>
-                        <td>
-                            <div class="d-grid gap-1 d-sm-flex">
-                                <button class="btn btn-sm btn-warning" onclick="startEdit(${entry.id})">Editar</button>
-                                <button class="btn btn-sm btn-info" onclick="showReceiptById(${entry.id})">Ver Recibo</button>
-                            </div>
-                        </td>
-                    `;
-                    historyTableBody.appendChild(row);
-                });
-            };
-
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-
-                const editId = document.getElementById('edit-id').value;
-                const entries = getEntries();
-
-                const entryData = {
-                    date: document.getElementById('date').value,
-                    receiptNumber: document.getElementById('receipt-number').value,
-                    concept: document.getElementById('concept').value,
-                    person: document.getElementById('person').value,
-                    type: document.getElementById('type').value,
-                    amount: document.getElementById('amount').value,
-                    fund: document.getElementById('fund').value,
-                };
-
-                if (editId) {
-                    // Modo Edición
-                    const entryIndex = entries.findIndex(e => e.id == editId);
-                    if (entryIndex > -1) {
-                        entries[entryIndex] = {
-                            ...entries[entryIndex], // Conserva el ID original
-                            ...entryData
-                        };
-                    }
-                } else {
-                    // Modo Agregar
-                    const newEntry = {
-                        id: Date.now(),
-                        ...entryData
-                    };
-                    entries.push(newEntry);
-                }
-
-                saveEntries(entries);
-                cancelEdit(); // Restablece el formulario y los botones
-                updateDisplay(); // Actualiza toda la vista
             });
 
-            const cancelEdit = () => {
-                form.reset();
-                document.getElementById('edit-id').value = '';
-                formTitle.textContent = 'Nuevo Asiento Contable';
-                formSubmitButton.textContent = 'Guardar Asiento';
-                
-                const cancelButton = document.getElementById('cancel-edit-btn');
-                if (cancelButton) {
-                    cancelButton.remove();
-                }
-            };
-
-            window.startEdit = (id) => {
-                const entries = getEntries();
-                const entryToEdit = entries.find(e => e.id === id);
-                if (!entryToEdit) return;
-
-                // Rellenar el formulario
-                document.getElementById('edit-id').value = entryToEdit.id;
-                document.getElementById('date').value = entryToEdit.date;
-                document.getElementById('receipt-number').value = entryToEdit.receiptNumber || '';
-                document.getElementById('concept').value = entryToEdit.concept;
-                document.getElementById('person').value = entryToEdit.person;
-                document.getElementById('type').value = entryToEdit.type;
-                document.getElementById('amount').value = entryToEdit.amount;
-                document.getElementById('fund').value = entryToEdit.fund;
-
-                // Actualizar la UI al modo edición
-                formTitle.textContent = 'Editar Asiento Contable';
-                formSubmitButton.textContent = 'Actualizar Asiento';
-                
-                if (!document.getElementById('cancel-edit-btn')) {
-                    const cancelButton = document.createElement('button');
-                    cancelButton.type = 'button';
-                    cancelButton.id = 'cancel-edit-btn';
-                    cancelButton.textContent = 'Cancelar';
-                    cancelButton.className = 'btn btn-secondary ms-2';
-                    cancelButton.onclick = cancelEdit;
-                    formSubmitButton.after(cancelButton);
-                }
-                form.scrollIntoView({ behavior: 'smooth' });
-            };
-
-            window.startFundEdit = (buttonEl) => {
-                const li = buttonEl.closest('li');
-                const oldName = li.dataset.fundName;
-
-                li.innerHTML = `
-                    <input type="text" class="form-control form-control-sm" value="${oldName}">
-                    <div class="btn-group">
-                        <button class="btn btn-success btn-sm" onclick="saveFundEdit(this, '${oldName}')">Guardar</button>
-                        <button class="btn btn-secondary btn-sm" onclick="renderFundsList()">Cancelar</button>
-                    </div>
-                `;
-                li.querySelector('input').focus();
-            };
-
-            window.saveFundEdit = (buttonEl, oldName) => {
-                const li = buttonEl.closest('li');
-                const input = li.querySelector('input');
-                const newName = input.value.trim();
-
-                if (!newName || newName === oldName) {
-                    renderFundsList();
-                    return;
-                }
-
-                let funds = getFunds();
-                if (funds.map(f => f.toLowerCase()).includes(newName.toLowerCase())) {
-                    alert('Ya existe un fondo con este nombre.');
-                    input.focus();
-                    return;
-                }
-
-                funds = funds.map(f => (f === oldName ? newName : f));
-                saveFunds(funds);
-
-                let entries = getEntries();
-                let updatedCount = 0;
-                entries.forEach(entry => {
-                    if (entry.fund === oldName) {
-                        entry.fund = newName;
-                        updatedCount++;
-                    }
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const recordId = parseInt(btn.dataset.id);
+                    showDeleteConfirmation(recordId);
                 });
-                saveEntries(entries);
+            });
+        }
 
-                alert(`Fondo "${oldName}" actualizado a "${newName}". Se actualizaron ${updatedCount} asientos.`);
-                populateFundSelects();
-                renderFundsList();
-                updateDisplay();
-            };
+        function startEditRecord(recordId) {
+            const recordToEdit = records.find(r => r.id === recordId);
+            if (!recordToEdit) return;
 
-            window.deleteFund = (fundName) => {
-                if (getFunds().length <= 1) { return alert('No se puede eliminar el último fondo.'); }
-                if (getEntries().some(e => e.fund === fundName)) { return alert(`El fondo "${fundName}" está en uso y no puede ser eliminado.`); }
+            editingRecordId = recordId;
 
-                if (confirm(`¿Estás seguro de que deseas eliminar el fondo "${fundName}"?`)) {
-                    saveFunds(getFunds().filter(f => f !== fundName));
-                    alert(`Fondo "${fundName}" eliminado.`);
-                    populateFundSelects();
-                    renderFundsList();
-                    updateDisplay();
+            document.getElementById('serviceType').value = recordToEdit.type;
+            document.getElementById('serviceDate').value = recordToEdit.date;
+            document.getElementById('serviceLeader').value = recordToEdit.leader;
+            document.getElementById('servicePreacher').value = recordToEdit.preacher;
+            document.getElementById('serviceOffering').value = recordToEdit.offering;
+            brothersInput.value = recordToEdit.brothers;
+            sistersInput.value = recordToEdit.sisters;
+            visitorsInput.value = recordToEdit.visitors;
+            childrenInput.value = recordToEdit.children;
+            visitingBrothersInput.value = recordToEdit.visitingBrothers || 0;
+
+            updateTotalAttendees();
+            updateOfferingDisplay();
+            saveBtn.innerHTML = `<i class="fas fa-sync-alt"></i> Actualizar`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function showDeleteConfirmation(recordId) {
+            currentAction = 'delete';
+            
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            
+            modalTitle.textContent = 'Eliminar Registro';
+            modalMessage.textContent = '¿Estás seguro de que deseas eliminar este registro? Esta acción no se puede deshacer.';
+            
+            modalConfirmBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+            modalConfirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+
+            modalConfirmBtn.dataset.recordId = recordId;
+            modal.classList.remove('hidden');
+        }
+        
+        function deleteRecord(recordId) {
+            records = records.filter(record => record.id !== recordId);
+            localStorage.setItem('churchAttendanceRecords', JSON.stringify(records));
+            
+            updateAttendanceStats();
+            updateOfferingStats();
+            renderRecordsTable();
+            updateChart();
+            
+            showToast('Registro eliminado exitosamente');
+        }
+        
+        function exportToExcel() {
+            const filterValue = filterRecords.value;
+            let filteredRecords = records;
+            
+            if (filterValue !== 'all') {
+                filteredRecords = records.filter(record => record.type === filterValue);
+            }
+
+            if (filteredRecords.length === 0) {
+                showToast('No hay registros para exportar', 'error');
+                return;
+            }
+
+            // Sort records by date, same as in the table
+            const sortedRecords = [...filteredRecords].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            const headers = [
+                "Fecha", "Servicio", "Dirigió", "Predicó", 
+                "Hermanos", "Hermanas", "Visitas", "Niños", "Hnos. Visitantes",
+                "Total Asistentes", "Ofrenda"
+            ];
+
+            const sanitizeCell = (cell) => {
+                let cellStr = String(cell === null || cell === undefined ? '' : cell);
+                if (cellStr.search(/("|,|\n)/g) >= 0) {
+                    cellStr = `"${cellStr.replace(/"/g, '""')}"`;
                 }
+                return cellStr;
             };
 
-            window.showReceiptById = (id) => {
-                const entries = getEntries();
-                const entry = entries.find(e => e.id === id);
-                if (!entry) return;
-                receiptContent.innerHTML = `
-                    <div id="receipt-print-area">
-                        <div class="receipt">
-                            <div class="receipt-header">
-                                <h2>RECIBO</h2>
-                                <div class="d-flex justify-content-center text-muted small">
-                                    <span class="me-4">ID de Transacción: ${entry.id}</span>
-                                    ${entry.receiptNumber ? `<span>Nro. Recibo: <strong>${entry.receiptNumber}</strong></span>` : ''}
-                                </div>
-                            </div>
-                            <div class="receipt-body">
-                                <p><strong>Fecha:</strong> ${entry.date}</p>
-                                <p><strong>Recibido de / Pagado a:</strong> ${entry.person || '_________________________'}</p>
-                                <p><strong>Concepto:</strong> ${entry.concept}</p>
-                                <p><strong>Tipo de Movimiento:</strong> ${entry.type}</p>
-                                <p><strong>Monto:</strong> $${formatNumber(parseFloat(entry.amount))}</p>
-                                <p><strong>Fondo Asignado:</strong> ${entry.fund}</p>
-                                <br><br>
-                                <div class="row mt-5">
-                                    <div class="col-6 text-center">
-                                        <p>_________________________</p>
-                                        <p><strong>Firma Recibido</strong></p>
-                                    </div>
-                                    <div class="col-6 text-center">
-                                        <p>_________________________</p>
-                                        <p><strong>Firma Tesorero(a)</strong></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                receiptModal.show();
-            };
-
-            window.printContent = (elementId) => {
-                const printArea = document.getElementById(elementId);
-                if (!printArea) return;
-
-                const parentModalBody = printArea.closest('.modal-body');
-                if (parentModalBody) {
-                    parentModalBody.classList.add('print-section');
-                    window.print();
-                    parentModalBody.classList.remove('print-section');
-                }
-            };
-
-            window.exportToCSV = () => {
-                const filteredEntries = getFilteredEntries();
-                if (filteredEntries.length === 0) {
-                    alert('No hay datos para exportar en la vista actual.');
-                    return;
-                }
-
-                const headers = ['Fecha', 'Nro. Recibo', 'Concepto', 'Recibido de / Pagado a', 'Tipo', 'Monto', 'Fondo Asignado'];
-                
-                const escapeCSV = (value) => {
-                    if (value === null || value === undefined) return '';
-                    let str = String(value);
-                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-                        return `"${str.replace(/"/g, '""')}"`;
-                    }
-                    return str;
-                };
-
-                const csvRows = [
-                    headers.join(','),
-                    ...filteredEntries.map(e => [
-                        e.date,
-                        escapeCSV(e.receiptNumber),
-                        escapeCSV(e.concept),
-                        escapeCSV(e.person),
-                        e.type,
-                        e.amount,
-                        escapeCSV(e.fund)
-                    ].join(','))
+            const rows = sortedRecords.map(record => {
+                const total = record.brothers + record.sisters + record.visitors + record.children + (record.visitingBrothers || 0);
+                const rowData = [
+                    record.date, // YYYY-MM-DD format is good for Excel
+                    record.type, record.leader, record.preacher,
+                    record.brothers, record.sisters, record.visitors, record.children, (record.visitingBrothers || 0),
+                    total, record.offering
                 ];
-
-                const csvContent = csvRows.join('\n');
-                const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'historial_contable.csv';
-                link.click();
-            };
-
-            window.clearHistory = () => {
-                const confirmation = confirm('¿Estás seguro de que deseas eliminar TODO el historial? Esta acción no se puede deshacer.');
-                if (confirmation) {
-                    saveEntries([]); // Guarda un array vacío, limpiando el historial
-                    updateDisplay();
-                    alert('El historial ha sido limpiado.');
-                }
-            };
-
-            const getFilteredEntries = () => {
-                let entries = getEntries();
-                const selectedFund = fundFilter.value;
-                const selectedType = typeFilter.value;
-
-                if (selectedFund !== 'all') {
-                    entries = entries.filter(e => e.fund === selectedFund);
-                }
-                if (selectedType !== 'all') {
-                    entries = entries.filter(e => e.type === selectedType);
-                }
-                return entries;
-            };
-
-            const updateDisplay = () => {
-                renderFundsDashboard(); // Se calcula primero con todos los datos
-                const filteredEntries = getFilteredEntries();
-                
-                // Las funciones de renderizado ahora usan la lista de asientos ya filtrada
-                renderEntries(filteredEntries);
-                calculateAndRenderTotals(filteredEntries);
-                updateTotalsTitle();
-            };
-
-            fundFilter.addEventListener('change', updateDisplay);
-            typeFilter.addEventListener('change', updateDisplay);
-
-            const renderFundsDashboard = () => {
-                const fundsDashboardContainer = document.getElementById('funds-dashboard');
-                if (!fundsDashboardContainer) return;
-
-                const entries = getEntries();
-                const fundOptions = getFunds();
-                
-                // Calculate balances for each fund
-                const fundBalances = fundOptions.reduce((acc, fundName) => {
-                    acc[fundName] = 0;
-                    return acc;
-                }, {});
-
-                entries.forEach(entry => {
-                    if (fundBalances.hasOwnProperty(entry.fund)) {
-                        const amount = parseFloat(entry.amount) || 0;
-                        if (entry.type === 'Ingreso') {
-                            fundBalances[entry.fund] += amount;
-                        } else {
-                            fundBalances[entry.fund] -= amount;
-                        }
-                    }
-                });
-
-                fundsDashboardContainer.innerHTML = ''; // Clear previous content
-
-                fundOptions.forEach(fundName => {
-                    const balance = fundBalances[fundName];
-                    const cardColor = balance >= 0 ? 'bg-light' : 'bg-warning text-dark';
-
-                    const cardHtml = `
-                        <div class="col-6 col-md-4 col-lg-3 mb-3">
-                            <div class="card ${cardColor}">
-                                <div class="card-body text-center p-2">
-                                    <h6 class="card-title text-truncate mb-1" style="font-size: 0.9rem;" title="${fundName}">${fundName}</h6>
-                                    <p class="card-text fs-5 fw-bold mb-0">$${formatNumber(balance)}</p>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    fundsDashboardContainer.insertAdjacentHTML('beforeend', cardHtml);
-                });
-            };
-
-            // --- Lógica de Arqueo de Caja ---
-            const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50];
-
-            const buildDenominationTable = () => {
-                const tableBody = document.getElementById('denomination-table');
-                tableBody.innerHTML = '';
-                denominations.forEach(value => {
-                    const row = document.createElement('tr');
-                    const type = value >= 2000 ? 'Billete' : 'Moneda';
-                    row.innerHTML = `
-                        <td>${type} de $${formatNumber(value)}</td>
-                        <td><input type="number" class="form-control form-control-sm denom-input" data-value="${value}" min="0" oninput="updateReconciliationTotals()"></td>
-                        <td id="total-${String(value).replace('.', '_')}">$0</td>
-                    `;
-                    tableBody.appendChild(row);
-                });
-            };
-
-            window.updateReconciliationTotals = () => {
-                let physicalTotal = 0;
-                document.querySelectorAll('.denom-input').forEach(input => {
-                    const count = parseInt(input.value) || 0;
-                    const value = parseFloat(input.dataset.value);
-                    const subtotal = count * value;
-                    physicalTotal += subtotal;
-                    document.getElementById(`total-${String(value).replace('.', '_')}`).textContent = `$${formatNumber(subtotal)}`;
-                });
-
-                document.getElementById('physical-total').textContent = `$${formatNumber(physicalTotal)}`;
-
-                const systemBalanceEl = document.getElementById('system-balance');
-                const systemBalance = parseFloat(systemBalanceEl.dataset.rawBalance) || 0;
-                
-                const difference = physicalTotal - systemBalance;
-                const differenceEl = document.getElementById('balance-difference');
-                
-                differenceEl.classList.remove('text-success', 'text-danger', 'text-primary');
-                if (difference > 0) {
-                    differenceEl.classList.add('text-success');
-                    differenceEl.textContent = `$${formatNumber(difference)} (Sobrante)`;
-                } else if (difference < 0) {
-                    differenceEl.classList.add('text-danger');
-                    differenceEl.textContent = `$${formatNumber(difference)} (Faltante)`;
-                } else {
-                    differenceEl.classList.add('text-primary');
-                    differenceEl.textContent = `$${formatNumber(difference)} (Cuadra)`;
-                }
-            };
-
-            window.openCashReconciliation = () => {
-                const entries = getEntries();
-                const localFundBalance = entries
-                    .filter(e => e.fund === 'Fondo Local')
-                    .reduce((acc, entry) => {
-                        const amount = parseFloat(entry.amount) || 0;
-                        return entry.type === 'Ingreso' ? acc + amount : acc - amount;
-                    }, 0);
-
-                const systemBalanceEl = document.getElementById('system-balance');
-                systemBalanceEl.textContent = `$${formatNumber(localFundBalance)}`;
-                systemBalanceEl.dataset.rawBalance = localFundBalance;
-                
-                // Resetear campos
-                document.querySelectorAll('.denom-input').forEach(input => input.value = '');
-                updateReconciliationTotals();
-                
-                cashReconciliationModal.show();
-            };
-
-            // Carga inicial de datos
-            const applyTheme = (theme) => {
-                if (theme === 'dark') {
-                    body.classList.add('dark-mode');
-                    themeToggle.textContent = 'Cambiar a Modo Día';
-                } else {
-                    body.classList.remove('dark-mode');
-                    themeToggle.textContent = 'Cambiar a Modo Noche';
-                }
-            };
-
-            themeToggle.addEventListener('click', (e) => {
-                const currentTheme = body.classList.contains('dark-mode') ? 'light' : 'dark';
-                localStorage.setItem('theme', currentTheme);
-                applyTheme(currentTheme);
+                return rowData.map(sanitizeCell).join(',');
             });
 
-            // Cargar tema guardado o usar 'light' por defecto
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            applyTheme(savedTheme);
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            
+            const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `asistencia_cultos_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
 
-            populateFundSelects();
-            buildDenominationTable();
-            updateDisplay();
-        });
+            showToast('Registros exportados a Excel (CSV)');
+        }
+
+        function applyStatsFilter() {
+            const type = statsFilterType.value;
+            const startDate = statsFilterStartDate.value;
+            const endDate = statsFilterEndDate.value;
+
+            let filteredRecords = records.filter(record => {
+                const recordDate = record.date;
+                let typeMatch = true;
+                let startDateMatch = true;
+                let endDateMatch = true;
+
+                if (type !== 'all') {
+                    typeMatch = record.type === type;
+                }
+                if (startDate) {
+                    startDateMatch = recordDate >= startDate;
+                }
+                if (endDate) {
+                    endDateMatch = recordDate <= endDate;
+                }
+
+                return typeMatch && startDateMatch && endDateMatch;
+            });
+
+            updateAttendanceStats(filteredRecords);
+            showToast(`Mostrando promedios para ${filteredRecords.length} registros filtrados.`);
+        }
+
+        function resetStatsFilter() {
+            statsFilterType.value = 'all';
+            statsFilterStartDate.value = '';
+            statsFilterEndDate.value = '';
+            updateAttendanceStats(); // Use default (all records)
+            showToast('Filtros de promedio reseteados.');
+        }
+
+        function applyOfferingFilter() {
+            const type = offeringFilterType.value;
+            const startDate = offeringFilterStartDate.value;
+            const endDate = offeringFilterEndDate.value;
+
+            let filteredRecords = records.filter(record => {
+                const recordDate = record.date;
+                let typeMatch = true;
+                let startDateMatch = true;
+                let endDateMatch = true;
+
+                if (type !== 'all') {
+                    typeMatch = record.type === type;
+                }
+                if (startDate) {
+                    startDateMatch = recordDate >= startDate;
+                }
+                if (endDate) {
+                    endDateMatch = recordDate <= endDate;
+                }
+
+                return typeMatch && startDateMatch && endDateMatch;
+            });
+
+            updateOfferingStats(filteredRecords);
+            showToast(`Mostrando ofrendas para ${filteredRecords.length} registros filtrados.`);
+        }
+
+        function resetOfferingFilter() {
+            offeringFilterType.value = 'all';
+            offeringFilterStartDate.value = '';
+            offeringFilterEndDate.value = '';
+            updateOfferingStats(); // Use default (all records)
+            showToast('Filtros de ofrendas reseteados.');
+        }
+
+        function filterRecordsTable() {
+            renderRecordsTable();
+        }
+        
+        function formatDate(dateString) {
+            // Using 'T00:00:00' or splitting the date avoids timezone issues 
+            // where new Date('YYYY-MM-DD') might result in the previous day.
+            const date = new Date(dateString + 'T00:00:00');
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+        
+        function updateAttendanceStats(recordsToProcess = records) {
+            const numRecords = recordsToProcess.length;
+
+            const totalBrothersCount = recordsToProcess.reduce((sum, record) => sum + record.brothers, 0);
+            const totalSistersCount = recordsToProcess.reduce((sum, record) => sum + record.sisters, 0);
+            const totalVisitorsCount = recordsToProcess.reduce((sum, record) => sum + record.visitors, 0);
+            const totalChildrenCount = recordsToProcess.reduce((sum, record) => sum + record.children, 0);
+            const totalVisitingBrothersCount = recordsToProcess.reduce((sum, record) => sum + (record.visitingBrothers || 0), 0);
+            const totalAllAttendees = totalBrothersCount + totalSistersCount + totalVisitorsCount + totalChildrenCount + totalVisitingBrothersCount;
+            
+            const avgBrothersCount = numRecords > 0 ? (totalBrothersCount / numRecords).toFixed(1) : '0';
+            const avgSistersCount = numRecords > 0 ? (totalSistersCount / numRecords).toFixed(1) : '0';
+            const avgVisitorsCount = numRecords > 0 ? (totalVisitorsCount / numRecords).toFixed(1) : '0';
+            const avgChildrenCount = numRecords > 0 ? (totalChildrenCount / numRecords).toFixed(1) : '0';
+            const avgVisitingBrothersCount = numRecords > 0 ? (totalVisitingBrothersCount / numRecords).toFixed(1) : '0';
+            const avgGrandTotalCount = numRecords > 0 ? (totalAllAttendees / numRecords).toFixed(1) : '0';
+            
+            avgBrothers.textContent = avgBrothersCount;
+            avgSisters.textContent = avgSistersCount;
+            avgVisitors.textContent = avgVisitorsCount;
+            avgChildren.textContent = avgChildrenCount;
+            avgVisitingBrothers.textContent = avgVisitingBrothersCount;
+            avgGrandTotal.textContent = avgGrandTotalCount;
+        }
+
+        function updateOfferingStats(recordsToProcess = records) {
+            const numRecords = recordsToProcess.length;
+            const totalOfferings = recordsToProcess.reduce((sum, record) => sum + record.offering, 0);
+            const averagePerService = numRecords > 0 ? Math.round(totalOfferings / numRecords) : 0;
+
+            totalAllOfferings.textContent = `$${totalOfferings.toLocaleString()}`;
+            averageOffering.textContent = `$${averagePerService.toLocaleString()}`;
+        }
+
+        function generateChartLegend() {
+            const legendContainer = document.getElementById('chartLegend');
+            if (!legendContainer) return;
+
+            legendContainer.innerHTML = '';
+            const datasets = servicesChart.data.datasets[0];
+            const labels = servicesChart.data.labels;
+
+            let hasData = false;
+            labels.forEach((label, index) => {
+                const count = datasets.data[index];
+                if (count > 0) {
+                    hasData = true;
+                    const color = datasets.backgroundColor[index];
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'flex items-center gap-2';
+                    legendItem.innerHTML = `
+                        <span class="w-3 h-3 rounded-sm" style="background-color: ${color}"></span>
+                        <span class="flex-1 truncate" title="${label}">${label}</span>
+                        <span class="font-bold text-accent">${count}</span>
+                    `;
+                    legendContainer.appendChild(legendItem);
+                }
+            });
+
+            if (!hasData) {
+                 legendContainer.innerHTML = `<p class="text-txtsecondary text-center italic">No hay datos para el gráfico.</p>`;
+            }
+        }
+        
+        function initializeChart() {
+            const ctx = document.getElementById('servicesChart').getContext('2d');
+            
+            const data = serviceTypesForChart.map(type => {
+                return records.filter(record => record.type === type).length;
+            });
+            
+            servicesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: serviceTypesForChart,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: chartColors,
+                        borderWidth: 2,
+                        borderColor: document.documentElement.classList.contains('dark') ? '#2d3748' : '#edf2f7'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false // We use a custom HTML legend
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+            generateChartLegend();
+        }
+        
+        function updateChart() {
+            const data = serviceTypesForChart.map(type => {
+                return records.filter(record => record.type === type).length;
+            });
+            
+            servicesChart.data.datasets[0].data = data;
+            servicesChart.update();
+            generateChartLegend();
+        }
     </script>
 </body>
 </html>
