@@ -120,8 +120,6 @@
 
         /* Ocultar flechas de aumento/disminución en campos de número */
         input[type=number] {
-            appearance: textfield;
-            -moz-appearance: textfield; /* Firefox */
         }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
@@ -638,8 +636,9 @@
                         <td>${entry.fund}</td>
                         <td>
                             <div class="d-grid gap-1 d-sm-flex">
-                                <button class="btn btn-sm btn-warning" onclick="startEdit(${entry.id})">Editar</button>
-                                <button class="btn btn-sm btn-info" onclick="showReceiptById(${entry.id})">Ver Recibo</button>
+                                <button class="btn btn-sm btn-info" onclick="showReceiptById(${entry.id})" title="Ver Recibo">Recibo</button>
+                                <button class="btn btn-sm btn-warning" onclick="startEdit(${entry.id})" title="Editar Asiento">Editar</button>
+                                <button class="btn btn-sm btn-danger" onclick="deleteEntry(${entry.id})" title="Eliminar Asiento">Eliminar</button>
                             </div>
                         </td>
                     `;
@@ -789,6 +788,19 @@
                     populateFundSelects();
                     renderFundsList();
                     updateDisplay();
+                }
+            };
+
+            window.deleteEntry = (id) => {
+                if (confirm('¿Estás seguro de que deseas eliminar este asiento? Esta acción no se puede deshacer.')) {
+                    let entries = getEntries();
+                    const updatedEntries = entries.filter(e => e.id !== id);
+                    saveEntries(updatedEntries);
+                    updateDisplay();
+                    // Opcional: cancelar edición si el asiento eliminado estaba siendo editado
+                    if (document.getElementById('edit-id').value == id) {
+                        cancelEdit();
+                    }
                 }
             };
 
