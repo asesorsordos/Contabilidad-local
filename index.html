@@ -27,6 +27,17 @@
         .receipt-body p {
             font-size: 1.1rem;
         }
+        #receipt-logo {
+            max-height: 70px; max-width: 200px;
+        }
+        #logo-preview {
+            max-height: 80px; max-width: 100%; border: 1px solid #ddd; padding: 5px; margin-top: 10px;
+        }
+        @media print {
+            body {
+                font-size: 1.1rem;
+            }
+        }
         @media print {
             body * {
                 visibility: hidden;
@@ -119,8 +130,6 @@
         }
 
         /* Ocultar flechas de aumento/disminución en campos de número */
-        input[type=number] {
-        }
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -133,9 +142,11 @@
     <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">Sistema de Contabilidad Local</h1>
-            <button id="theme-toggle" class="btn btn-outline-secondary btn-sm">Cambiar Tema</button>
+            <div>
+                <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#settingsModal" title="Configuración de la aplicación">Configuración</button>
+                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm">Cambiar Tema</button>
+            </div>
         </div>
- 
         <!-- Reportes y Totales -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -253,6 +264,10 @@
             </div>
             <div class="col-lg-8">
                 <div class="d-flex flex-wrap align-items-center justify-content-start justify-content-lg-end">
+                    <div class="me-2 mb-2 mb-md-0">
+                        <label for="concept-filter" class="form-label-sm me-1">Concepto:</label>
+                        <input type="text" id="concept-filter" class="form-control form-control-sm w-auto d-inline-block" placeholder="Buscar concepto...">
+                    </div>
                     <div class="me-2 mb-2 mb-md-0">
                         <label for="fund-filter" class="form-label-sm me-1">Fondo:</label>
                         <select id="fund-filter" class="form-select form-select-sm w-auto d-inline-block">
@@ -452,11 +467,43 @@
         </div>
     </div>
 
+    <!-- Modal para Configuración -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel">Configuración de Recibos</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="settings-form">
+                        <div class="mb-3">
+                            <label for="company-name" class="form-label">Nombre de la Empresa/Iglesia</label>
+                            <input type="text" id="company-name" class="form-control" placeholder="El nombre que aparecerá en los recibos">
+                        </div>
+                        <div class="mb-3">
+                            <label for="company-logo" class="form-label">Logo (Opcional)</label>
+                            <input type="file" id="company-logo" class="form-control" accept="image/*">
+                            <img id="logo-preview" src="#" alt="Vista previa del logo" style="display: none;" class="img-fluid mt-2">
+                        </div>
+                        <div id="logo-controls" style="display: none;">
+                            <button type="button" class="btn btn-danger btn-sm" id="remove-logo-btn">Eliminar Logo Actual</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" id="save-settings-btn" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap JS -->
     <script src="./libs/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+       document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('accounting-form');
             const historyTableBody = document.getElementById('history-table-body');
             const receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
@@ -465,12 +512,14 @@
             const formSubmitButton = document.getElementById('form-submit-button');
             const fundFilter = document.getElementById('fund-filter');
             const typeFilter = document.getElementById('type-filter');
+            const conceptFilter = document.getElementById('concept-filter');
             const totalsTitle = document.getElementById('totals-title');
             const cashReconciliationModal = new bootstrap.Modal(document.getElementById('cashReconciliationModal'));
             const fundSelect = document.getElementById('fund');
             const themeToggle = document.getElementById('theme-toggle');
             const body = document.body;
             const manageFundsModalEl = document.getElementById('manageFundsModal');
+            const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
 
             const defaultFunds = [
                 "Fondo Local", "Asamblea", "Caballeros", "Construcción", 
@@ -478,13 +527,68 @@
                 "Jóvenes", "Misiones", "Música", "Obra Social"
             ];
 
+            // --- Gestión de Configuración (Empresa y Logo) ---
+            const getSettings = () => {
+                return JSON.parse(localStorage.getItem('accountingSettings')) || { companyName: '', companyLogo: '' };
+            };
+
+            const saveSettings = (settings) => {
+                localStorage.setItem('accountingSettings', JSON.stringify(settings));
+            };
+
+            document.getElementById('settingsModal').addEventListener('show.bs.modal', () => {
+                const settings = getSettings();
+                document.getElementById('company-name').value = settings.companyName || '';
+                const logoPreview = document.getElementById('logo-preview');
+                const logoControls = document.getElementById('logo-controls');
+                if (settings.companyLogo) {
+                    logoPreview.src = settings.companyLogo;
+                    logoPreview.style.display = 'block';
+                    logoControls.style.display = 'block';
+                } else {
+                    logoPreview.style.display = 'none';
+                    logoControls.style.display = 'none';
+                }
+                document.getElementById('company-logo').value = ''; // Reset file input
+            });
+
+            document.getElementById('company-logo').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        document.getElementById('logo-preview').src = e.target.result;
+                        document.getElementById('logo-preview').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
+                const companyName = document.getElementById('company-name').value.trim();
+                const logoPreviewSrc = document.getElementById('logo-preview').src;
+                const companyLogo = logoPreviewSrc.startsWith('data:image') ? logoPreviewSrc : '';
+
+                saveSettings({ companyName, companyLogo });
+                alert('Configuración guardada correctamente.');
+                settingsModal.hide();
+            });
+
+            document.getElementById('remove-logo-btn').addEventListener('click', () => {
+                if (confirm('¿Estás seguro de que deseas eliminar el logo?')) {
+                    saveSettings({ ...getSettings(), companyLogo: '' });
+                    document.getElementById('logo-preview').style.display = 'none';
+                    document.getElementById('logo-controls').style.display = 'none';
+                    document.getElementById('company-logo').value = '';
+                    alert('Logo eliminado.');
+                }
+            });
+
             // --- Gestión de Fondos ---
             const getFunds = () => {
                 const fundsJSON = localStorage.getItem('accountingFunds');
                 if (fundsJSON) {
                     const funds = JSON.parse(fundsJSON);
-                    // Se asegura de que la lista de fondos siempre esté ordenada con "Fondo Local" al principio.
-                    // Esto corrige el problema para usuarios con datos guardados antes del cambio.
                     funds.sort((a, b) => {
                         if (a === 'Fondo Local') return -1;
                         if (b === 'Fondo Local') return 1;
@@ -492,10 +596,8 @@
                     });
                     return funds;
                 } else {
-                    // First time setup: combine default funds with any funds from existing entries for a smooth migration.
                     const existingEntries = getEntries();
                     const fundsFromEntries = existingEntries.map(entry => entry.fund);
-                    // Use a Set to get unique values, and filter out any empty/null fund names.
                     const combinedFunds = [...new Set([...defaultFunds, ...fundsFromEntries])].filter(f => f);
                     
                     saveFunds(combinedFunds);
@@ -504,7 +606,6 @@
             };
 
             const saveFunds = (funds) => {
-                // Siempre guardar ordenado alfabéticamente, pero manteniendo "Fondo Local" al principio.
                 funds.sort((a, b) => {
                     if (a === 'Fondo Local') return -1;
                     if (b === 'Fondo Local') return 1;
@@ -527,7 +628,6 @@
                     fundFilter.add(option.cloneNode(true));
                 });
 
-                // Restore previous selection if possible, otherwise default.
                 fundSelect.value = funds.includes(currentFundValue) ? currentFundValue : (funds[0] || '');
                 fundFilter.value = funds.includes(currentFilterValue) ? currentFilterValue : 'all';
             };
@@ -582,7 +682,6 @@
                 return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value);
             };
 
-
             const getEntries = () => {
                 return JSON.parse(localStorage.getItem('accountingEntries')) || [];
             };
@@ -613,16 +712,14 @@
                 balanceEl.textContent = `$${formatNumber(balance)}`;
                 
                 const balanceCard = balanceEl.closest('.card');
-                balanceCard.className = 'card text-white'; // Reset classes
+                balanceCard.className = 'card text-white';
                 balanceCard.classList.add(balance >= 0 ? 'bg-primary' : 'bg-danger');
             };
 
             const renderEntries = (entries) => {
                 historyTableBody.innerHTML = '';
-                // Mostrar los más recientes primero
                 entries.slice().reverse().forEach(entry => {
                     const row = document.createElement('tr');
-                    
                     const typeClass = entry.type === 'Ingreso' ? 'text-success' : 'text-danger';
                     const sign = entry.type === 'Ingreso' ? '+' : '-';
 
@@ -663,16 +760,14 @@
                 };
 
                 if (editId) {
-                    // Modo Edición
                     const entryIndex = entries.findIndex(e => e.id == editId);
                     if (entryIndex > -1) {
                         entries[entryIndex] = {
-                            ...entries[entryIndex], // Conserva el ID original
+                            ...entries[entryIndex],
                             ...entryData
                         };
                     }
                 } else {
-                    // Modo Agregar
                     const newEntry = {
                         id: Date.now(),
                         ...entryData
@@ -681,8 +776,8 @@
                 }
 
                 saveEntries(entries);
-                cancelEdit(); // Restablece el formulario y los botones
-                updateDisplay(); // Actualiza toda la vista
+                cancelEdit();
+                updateDisplay();
             });
 
             const cancelEdit = () => {
@@ -702,7 +797,6 @@
                 const entryToEdit = entries.find(e => e.id === id);
                 if (!entryToEdit) return;
 
-                // Rellenar el formulario
                 document.getElementById('edit-id').value = entryToEdit.id;
                 document.getElementById('date').value = entryToEdit.date;
                 document.getElementById('receipt-number').value = entryToEdit.receiptNumber || '';
@@ -712,7 +806,6 @@
                 document.getElementById('amount').value = entryToEdit.amount;
                 document.getElementById('fund').value = entryToEdit.fund;
 
-                // Actualizar la UI al modo edición
                 formTitle.textContent = 'Editar Asiento Contable';
                 formSubmitButton.textContent = 'Actualizar Asiento';
                 
@@ -797,7 +890,6 @@
                     const updatedEntries = entries.filter(e => e.id !== id);
                     saveEntries(updatedEntries);
                     updateDisplay();
-                    // Opcional: cancelar edición si el asiento eliminado estaba siendo editado
                     if (document.getElementById('edit-id').value == id) {
                         cancelEdit();
                     }
@@ -806,21 +898,35 @@
 
             window.showReceiptById = (id) => {
                 const entries = getEntries();
+                const settings = getSettings();
                 const entry = entries.find(e => e.id === id);
                 if (!entry) return;
+
+                const isIncome = entry.type === 'Ingreso';
+                const receiptTitle = isIncome ? 'COMPROBANTE DE INGRESO' : 'COMPROBANTE DE EGRESO';
+                const personLabel = isIncome ? 'Recibido de' : 'Pagado a';
+
                 receiptContent.innerHTML = `
                     <div id="receipt-print-area">
                         <div class="receipt">
                             <div class="receipt-header">
-                                <h2>RECIBO</h2>
-                                <div class="d-flex justify-content-center text-muted small">
-                                    <span class="me-4">ID de Transacción: ${entry.id}</span>
-                                    ${entry.receiptNumber ? `<span>Nro. Recibo: <strong>${entry.receiptNumber}</strong></span>` : ''}
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="text-start">
+                                        ${settings.companyLogo ? `<img id="receipt-logo" src="${settings.companyLogo}" alt="Logo" style="max-height: 70px; max-width: 200px;">` : ''}
+                                        <h4 class="mt-2 mb-0">${settings.companyName || ''}</h4>
+                                    </div>
+                                    <div class="text-end">
+                                        <h2>${receiptTitle}</h2>
+                                        <div class="text-muted small">
+                                            <div>ID Trans.: ${entry.id}</div>
+                                            ${entry.receiptNumber ? `<div>Nro. Recibo: <strong>${entry.receiptNumber}</strong></div>` : ''}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="receipt-body">
-                                <p><strong>Fecha:</strong> ${entry.date}</p>
-                                <p><strong>Recibido de / Pagado a:</strong> ${entry.person || '_________________________'}</p>
+                                <p class="mt-4"><strong>Fecha:</strong> ${entry.date}</p>
+                                <p><strong>${personLabel}:</strong> ${entry.person || '_________________________'}</p>
                                 <p><strong>Concepto:</strong> ${entry.concept}</p>
                                 <p><strong>Tipo de Movimiento:</strong> ${entry.type}</p>
                                 <p><strong>Monto:</strong> $${formatNumber(parseFloat(entry.amount))}</p>
@@ -897,7 +1003,7 @@
             window.clearHistory = () => {
                 const confirmation = confirm('¿Estás seguro de que deseas eliminar TODO el historial? Esta acción no se puede deshacer.');
                 if (confirmation) {
-                    saveEntries([]); // Guarda un array vacío, limpiando el historial
+                    saveEntries([]);
                     updateDisplay();
                     alert('El historial ha sido limpiado.');
                 }
@@ -907,6 +1013,7 @@
                 let entries = getEntries();
                 const selectedFund = fundFilter.value;
                 const selectedType = typeFilter.value;
+                const conceptQuery = conceptFilter.value.trim().toLowerCase();
 
                 if (selectedFund !== 'all') {
                     entries = entries.filter(e => e.fund === selectedFund);
@@ -914,21 +1021,23 @@
                 if (selectedType !== 'all') {
                     entries = entries.filter(e => e.type === selectedType);
                 }
+                if (conceptQuery) {
+                    entries = entries.filter(e => e.concept.toLowerCase().includes(conceptQuery));
+                }
                 return entries;
             };
 
             const updateDisplay = () => {
-                renderFundsDashboard(); // Se calcula primero con todos los datos
+                renderFundsDashboard();
                 const filteredEntries = getFilteredEntries();
                 
-                // Las funciones de renderizado ahora usan la lista de asientos ya filtrada
                 renderEntries(filteredEntries);
                 calculateAndRenderTotals(filteredEntries);
-                updateTotalsTitle();
             };
 
             fundFilter.addEventListener('change', updateDisplay);
             typeFilter.addEventListener('change', updateDisplay);
+            conceptFilter.addEventListener('input', updateDisplay);
 
             const renderFundsDashboard = () => {
                 const fundsDashboardContainer = document.getElementById('funds-dashboard');
@@ -937,7 +1046,6 @@
                 const entries = getEntries();
                 const fundOptions = getFunds();
                 
-                // Calculate balances for each fund
                 const fundBalances = fundOptions.reduce((acc, fundName) => {
                     acc[fundName] = 0;
                     return acc;
@@ -954,7 +1062,7 @@
                     }
                 });
 
-                fundsDashboardContainer.innerHTML = ''; // Clear previous content
+                fundsDashboardContainer.innerHTML = '';
 
                 fundOptions.forEach(fundName => {
                     const balance = fundBalances[fundName];
@@ -975,7 +1083,7 @@
             };
 
             // --- Lógica de Arqueo de Caja ---
-            const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50];
+            const denominations = [100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100];
 
             const buildDenominationTable = () => {
                 const tableBody = document.getElementById('denomination-table');
@@ -985,11 +1093,23 @@
                     const type = value >= 2000 ? 'Billete' : 'Moneda';
                     row.innerHTML = `
                         <td>${type} de $${formatNumber(value)}</td>
-                        <td><input type="number" class="form-control form-control-sm denom-input" data-value="${value}" min="0" oninput="updateReconciliationTotals()"></td>
+                        <td><input type="number" class="form-control form-control-sm denom-input" data-value="${value}" min="0" oninput="handleDenomInput(this)"></td>
                         <td id="total-${String(value).replace('.', '_')}">$0</td>
                     `;
                     tableBody.appendChild(row);
                 });
+            };
+
+            window.handleDenomInput = (input) => {
+                updateReconciliationTotals();
+                const savedDenoms = JSON.parse(sessionStorage.getItem('cashReconciliationInputs')) || {};
+                const value = input.dataset.value;
+                if (input.value === '' || input.value === '0') {
+                    delete savedDenoms[value];
+                } else {
+                    savedDenoms[value] = input.value;
+                }
+                sessionStorage.setItem('cashReconciliationInputs', JSON.stringify(savedDenoms));
             };
 
             window.updateReconciliationTotals = () => {
@@ -1025,25 +1145,35 @@
 
             window.openCashReconciliation = () => {
                 const entries = getEntries();
-                const localFundBalance = entries
-                    .filter(e => e.fund === 'Fondo Local')
-                    .reduce((acc, entry) => {
-                        const amount = parseFloat(entry.amount) || 0;
-                        return entry.type === 'Ingreso' ? acc + amount : acc - amount;
-                    }, 0);
+                
+                // Cálculo del Saldo Total general (Ingresos - Egresos de todos los fondos)
+                let totalIncome = 0;
+                let totalExpenses = 0;
+                entries.forEach(entry => {
+                    const amount = parseFloat(entry.amount) || 0;
+                    if (entry.type === 'Ingreso') {
+                        totalIncome += amount;
+                    } else {
+                        totalExpenses += amount;
+                    }
+                });
+                const totalBalance = totalIncome - totalExpenses;
 
                 const systemBalanceEl = document.getElementById('system-balance');
-                systemBalanceEl.textContent = `$${formatNumber(localFundBalance)}`;
-                systemBalanceEl.dataset.rawBalance = localFundBalance;
+                systemBalanceEl.textContent = `$${formatNumber(totalBalance)}`;
+                systemBalanceEl.dataset.rawBalance = totalBalance;
                 
-                // Resetear campos
-                document.querySelectorAll('.denom-input').forEach(input => input.value = '');
+                // Restaurar cantidades previas guardadas en la sesión
+                const savedDenoms = JSON.parse(sessionStorage.getItem('cashReconciliationInputs')) || {};
+                document.querySelectorAll('.denom-input').forEach(input => {
+                    const value = input.dataset.value;
+                    input.value = savedDenoms[value] !== undefined ? savedDenoms[value] : '';
+                });
+
                 updateReconciliationTotals();
-                
                 cashReconciliationModal.show();
             };
 
-            // Carga inicial de datos
             const applyTheme = (theme) => {
                 if (theme === 'dark') {
                     body.classList.add('dark-mode');
@@ -1060,7 +1190,6 @@
                 applyTheme(currentTheme);
             });
 
-            // Cargar tema guardado o usar 'light' por defecto
             const savedTheme = localStorage.getItem('theme') || 'light';
             applyTheme(savedTheme);
 
